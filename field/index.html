@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2D Vector Field Viewer</title>
+  <title>2D Vector Field Explorer</title>
   <style>
     :root {
       color-scheme: dark;
@@ -14,6 +14,8 @@
       --text: #e8edff;
       --muted: #a9b6dc;
       --accent: #7fb3ff;
+      --particle: #ffd36e;
+      --trail: rgba(255, 211, 110, 0.65);
       --error: #ff9a9a;
     }
 
@@ -31,8 +33,8 @@
     }
 
     .app {
-      width: min(1100px, 100%);
-      background: rgba(18, 26, 49, 0.92);
+      width: min(1180px, 100%);
+      background: rgba(18, 26, 49, 0.94);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 20px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.35);
@@ -56,9 +58,9 @@
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 14px;
-      padding: 18px 24px 24px;
+      padding: 18px 24px 20px;
     }
 
     .control {
@@ -67,12 +69,16 @@
       gap: 8px;
     }
 
+    .control.span2 {
+      grid-column: span 2;
+    }
+
     label {
       font-size: 0.92rem;
       color: var(--muted);
     }
 
-    input, select, button {
+    input, button {
       border: 1px solid rgba(255,255,255,0.12);
       background: #0d1428;
       color: var(--text);
@@ -85,14 +91,18 @@
       background: linear-gradient(180deg, #2c5db7, #234c95);
       cursor: pointer;
       font-weight: 600;
-      transition: transform 0.12s ease, opacity 0.12s ease;
+      transition: transform 0.12s ease;
     }
 
     button:hover { transform: translateY(-1px); }
     button:active { transform: translateY(0); }
 
+    .secondary {
+      background: #17213f;
+    }
+
     .canvas-wrap {
-      padding: 0 24px 24px;
+      padding: 0 24px 18px;
     }
 
     canvas {
@@ -104,20 +114,29 @@
       background: #08101f;
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
+      cursor: crosshair;
     }
 
-    .status {
-      min-height: 24px;
-      padding: 0 24px 24px;
+    .status, .hud, .examples {
+      padding: 0 24px 18px;
       color: var(--muted);
+      line-height: 1.6;
     }
 
     .status.error { color: var(--error); }
 
-    .examples {
-      padding: 0 24px 24px;
-      color: var(--muted);
-      line-height: 1.6;
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud div {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 12px;
     }
 
     code {
@@ -126,12 +145,14 @@
       border-radius: 8px;
     }
 
-    @media (max-width: 840px) {
-      .controls { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 980px) {
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .control.span2 { grid-column: span 1; }
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 560px) {
-      .controls { grid-template-columns: 1fr; }
+      .controls, .hud { grid-template-columns: 1fr; }
       body { padding: 12px; }
     }
   </style>
@@ -139,26 +160,42 @@
 <body>
   <div class="app">
     <div class="header">
-      <h1>2차원 벡터장 시각화</h1>
-      <p class="sub">정수 격자점 (x, y), -12 ≤ x,y ≤ 12 에서 벡터를 화살표로 그립니다. 식은 JavaScript 문법으로 입력하세요.</p>
+      <h1>2차원 벡터장 탐험기</h1>
+      <p class="sub">화살표는 화면 기준 상대 격자에 고정되고, 입자는 하나만 존재합니다. 캔버스를 클릭하면 입자를 배치하고 카메라 중심이 그 입자를 따라갑니다.</p>
     </div>
 
     <div class="controls">
-      <div class="control">
+      <div class="control span2">
         <label for="fx">Fₓ(x, y)</label>
         <input id="fx" value="-y" />
       </div>
-      <div class="control">
+      <div class="control span2">
         <label for="fy">Fᵧ(x, y)</label>
         <input id="fy" value="x" />
       </div>
       <div class="control">
-        <label for="scale">화살표 길이 배율</label>
-        <input id="scale" type="number" value="0.7" step="0.1" min="0.1" max="5" />
+        <label for="speed">속도 배율</label>
+        <input id="speed" type="number" value="0.8" step="0.1" min="0.01" max="20" />
       </div>
-      <div class="control" style="justify-content: end;">
+      <div class="control">
+        <label for="arrowScale">화살표 배율</label>
+        <input id="arrowScale" type="number" value="0.9" step="0.1" min="0.1" max="5" />
+      </div>
+      <div class="control">
+        <label for="zoom">줌</label>
+        <input id="zoom" type="number" value="34" step="1" min="8" max="120" />
+      </div>
+      <div class="control">
+        <label for="dt">dt</label>
+        <input id="dt" type="number" value="0.03" step="0.005" min="0.001" max="0.3" />
+      </div>
+      <div class="control">
         <label>&nbsp;</label>
-        <button id="drawBtn">그리기</button>
+        <button id="toggleBtn">재생</button>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <button id="resetBtn" class="secondary">입자 제거</button>
       </div>
     </div>
 
@@ -166,10 +203,17 @@
       <canvas id="canvas" width="920" height="920"></canvas>
     </div>
 
-    <div id="status" class="status"></div>
+    <div id="hud" class="hud">
+      <div>입자 위치: <span id="posLabel">없음</span></div>
+      <div>벡터값: <span id="vecLabel">없음</span></div>
+      <div>속력: <span id="magLabel">없음</span></div>
+      <div>궤적 점 수: <span id="trailLabel">0</span></div>
+    </div>
+
+    <div id="status" class="status">캔버스를 클릭해 입자를 배치하세요.</div>
 
     <div class="examples">
-      예시 식: <code>-y</code>, <code>x</code> / <code>x</code>, <code>y</code> / <code>Math.sin(y)</code>, <code>Math.cos(x)</code> / <code>x/(x*x+y*y+1)</code>, <code>y/(x*x+y*y+1)</code>
+      예시 식: <code>-y</code>, <code>x</code> / <code>x</code>, <code>y</code> / <code>-x/(x*x+y*y+1)</code>, <code>-y/(x*x+y*y+1)</code> / <code>Math.sin(y)</code>, <code>Math.cos(x)</code>
     </div>
   </div>
 
@@ -178,23 +222,72 @@
     const ctx = canvas.getContext('2d');
     const fxInput = document.getElementById('fx');
     const fyInput = document.getElementById('fy');
-    const scaleInput = document.getElementById('scale');
-    const drawBtn = document.getElementById('drawBtn');
+    const speedInput = document.getElementById('speed');
+    const arrowScaleInput = document.getElementById('arrowScale');
+    const zoomInput = document.getElementById('zoom');
+    const dtInput = document.getElementById('dt');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const statusEl = document.getElementById('status');
+    const posLabel = document.getElementById('posLabel');
+    const vecLabel = document.getElementById('vecLabel');
+    const magLabel = document.getElementById('magLabel');
+    const trailLabel = document.getElementById('trailLabel');
 
-    const RANGE = 12;
-    const COUNT = RANGE * 2 + 1;
+    let fx = null;
+    let fy = null;
+    let hasCompileError = false;
+    let running = false;
+    let particle = null;
+    let trail = [];
+    let lastTimestamp = null;
 
     function compileExpression(expr) {
       return new Function('x', 'y', `return (${expr});`);
     }
 
-    function toCanvasX(x, size, padding) {
-      return padding + ((x + RANGE) / (COUNT - 1)) * (size - padding * 2);
+    function updateFieldFunctions() {
+      try {
+        fx = compileExpression(fxInput.value);
+        fy = compileExpression(fyInput.value);
+        hasCompileError = false;
+        setStatus('캔버스를 클릭해 입자를 배치하세요.', false);
+      } catch (err) {
+        hasCompileError = true;
+        setStatus('식 문법 오류: ' + err.message, true);
+      }
     }
 
-    function toCanvasY(y, size, padding) {
-      return size - padding - ((y + RANGE) / (COUNT - 1)) * (size - padding * 2);
+    function setStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'status error' : 'status';
+    }
+
+    function worldToScreen(wx, wy, cameraX, cameraY, zoom) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      return {
+        x: cx + (wx - cameraX) * zoom,
+        y: cy - (wy - cameraY) * zoom,
+      };
+    }
+
+    function screenToWorld(sx, sy, cameraX, cameraY, zoom) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      return {
+        x: cameraX + (sx - cx) / zoom,
+        y: cameraY - (sy - cy) / zoom,
+      };
+    }
+
+    function evaluateField(x, y) {
+      const vx = Number(fx(x, y));
+      const vy = Number(fy(x, y));
+      if (!Number.isFinite(vx) || !Number.isFinite(vy)) {
+        throw new Error(`(${x.toFixed(3)}, ${y.toFixed(3)}) 에서 값이 유한하지 않습니다.`);
+      }
+      return { vx, vy, mag: Math.hypot(vx, vy) };
     }
 
     function drawArrow(x1, y1, x2, y2) {
@@ -225,129 +318,246 @@
       ctx.stroke();
     }
 
-    function clearCanvas(size) {
-      ctx.clearRect(0, 0, size, size);
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#08101f';
-      ctx.fillRect(0, 0, size, size);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    function drawGrid(size, padding) {
+    function drawGrid(cameraX, cameraY, zoom) {
+      const left = cameraX - canvas.width / 2 / zoom;
+      const right = cameraX + canvas.width / 2 / zoom;
+      const bottom = cameraY - canvas.height / 2 / zoom;
+      const top = cameraY + canvas.height / 2 / zoom;
+
+      const minX = Math.floor(left) - 1;
+      const maxX = Math.ceil(right) + 1;
+      const minY = Math.floor(bottom) - 1;
+      const maxY = Math.ceil(top) + 1;
+
       ctx.lineWidth = 1;
 
-      for (let i = -RANGE; i <= RANGE; i++) {
-        const x = toCanvasX(i, size, padding);
-        const y = toCanvasY(i, size, padding);
-
-        ctx.strokeStyle = i === 0 ? '#91a4d6' : 'rgba(127, 179, 255, 0.16)';
-
+      for (let gx = minX; gx <= maxX; gx++) {
+        const p = worldToScreen(gx, 0, cameraX, cameraY, zoom);
+        ctx.strokeStyle = gx === 0 ? '#91a4d6' : 'rgba(127, 179, 255, 0.16)';
         ctx.beginPath();
-        ctx.moveTo(x, padding);
-        ctx.lineTo(x, size - padding);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(size - padding, y);
+        ctx.moveTo(p.x, 0);
+        ctx.lineTo(p.x, canvas.height);
         ctx.stroke();
       }
 
-      ctx.fillStyle = 'rgba(232, 237, 255, 0.75)';
-      ctx.font = '12px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-
-      for (let i = -RANGE; i <= RANGE; i++) {
-        const x = toCanvasX(i, size, padding);
-        if (i !== 0) ctx.fillText(String(i), x, toCanvasY(0, size, padding) + 6);
-      }
-
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      for (let i = -RANGE; i <= RANGE; i++) {
-        const y = toCanvasY(i, size, padding);
-        if (i !== 0) ctx.fillText(String(i), toCanvasX(0, size, padding) + 6, y);
+      for (let gy = minY; gy <= maxY; gy++) {
+        const p = worldToScreen(0, gy, cameraX, cameraY, zoom);
+        ctx.strokeStyle = gy === 0 ? '#91a4d6' : 'rgba(127, 179, 255, 0.16)';
+        ctx.beginPath();
+        ctx.moveTo(0, p.y);
+        ctx.lineTo(canvas.width, p.y);
+        ctx.stroke();
       }
     }
 
-    function drawField() {
-      const size = canvas.width;
-      const padding = 40;
-      const scale = Number(scaleInput.value);
-
-      statusEl.textContent = '';
-      statusEl.className = 'status';
-
-      let fx, fy;
-      try {
-        fx = compileExpression(fxInput.value);
-        fy = compileExpression(fyInput.value);
-      } catch (err) {
-        statusEl.textContent = '식 문법 오류: ' + err.message;
-        statusEl.className = 'status error';
-        return;
-      }
-
-      clearCanvas(size);
-      drawGrid(size, padding);
-
-      const spacing = (size - padding * 2) / (COUNT - 1);
-      const maxArrow = spacing * 0.42 * scale;
-
-      const values = [];
+    function drawRelativeField(cameraX, cameraY, zoom) {
+      const spacingPx = Math.max(28, Math.min(56, zoom));
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const cols = Math.ceil(canvas.width / spacingPx / 2) + 1;
+      const rows = Math.ceil(canvas.height / spacingPx / 2) + 1;
+      const arrowBase = spacingPx * 0.42 * Number(arrowScaleInput.value);
+      const samples = [];
       let maxMag = 0;
 
-      try {
-        for (let y = -RANGE; y <= RANGE; y++) {
-          for (let x = -RANGE; x <= RANGE; x++) {
-            const vx = Number(fx(x, y));
-            const vy = Number(fy(x, y));
-            if (!Number.isFinite(vx) || !Number.isFinite(vy)) {
-              throw new Error(`(${x}, ${y}) 에서 값이 유한하지 않습니다.`);
-            }
-            const mag = Math.hypot(vx, vy);
-            values.push({ x, y, vx, vy, mag });
-            if (mag > maxMag) maxMag = mag;
+      for (let iy = -rows; iy <= rows; iy++) {
+        for (let ix = -cols; ix <= cols; ix++) {
+          const sx = cx + ix * spacingPx;
+          const sy = cy + iy * spacingPx;
+          const world = screenToWorld(sx, sy, cameraX, cameraY, zoom);
+          try {
+            const field = evaluateField(world.x, world.y);
+            samples.push({ sx, sy, ...field });
+            if (field.mag > maxMag) maxMag = field.mag;
+          } catch {
+            samples.push({ sx, sy, vx: 0, vy: 0, mag: 0, invalid: true });
           }
         }
-      } catch (err) {
-        statusEl.textContent = '계산 오류: ' + err.message;
-        statusEl.className = 'status error';
-        return;
       }
 
       ctx.strokeStyle = '#7fb3ff';
       ctx.lineWidth = 2;
+      ctx.fillStyle = '#7fb3ff';
 
-      for (const p of values) {
-        const cx = toCanvasX(p.x, size, padding);
-        const cy = toCanvasY(p.y, size, padding);
-
-        if (p.mag === 0 || maxMag === 0) {
+      for (const s of samples) {
+        if (s.invalid || s.mag === 0 || maxMag === 0) {
           ctx.beginPath();
-          ctx.arc(cx, cy, 1.7, 0, Math.PI * 2);
-          ctx.fillStyle = '#7fb3ff';
+          ctx.arc(s.sx, s.sy, 1.7, 0, Math.PI * 2);
           ctx.fill();
           continue;
         }
 
-        const ux = p.vx / p.mag;
-        const uy = p.vy / p.mag;
-        const len = (p.mag / maxMag) * maxArrow;
-
-        const ex = cx + ux * len;
-        const ey = cy - uy * len;
-        drawArrow(cx, cy, ex, ey);
+        const ux = s.vx / s.mag;
+        const uy = s.vy / s.mag;
+        const len = (s.mag / maxMag) * arrowBase;
+        drawArrow(s.sx, s.sy, s.sx + ux * len, s.sy - uy * len);
       }
-
-      statusEl.textContent = `표시 완료: ${COUNT}×${COUNT} 격자, 총 ${COUNT * COUNT}개 벡터`;
     }
 
-    drawBtn.addEventListener('click', drawField);
-    fxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
-    fyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
-    scaleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
+    function drawTrail(cameraX, cameraY, zoom) {
+      if (trail.length < 2) return;
+      ctx.strokeStyle = 'rgba(255, 211, 110, 0.65)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      trail.forEach((p, i) => {
+        const s = worldToScreen(p.x, p.y, cameraX, cameraY, zoom);
+        if (i === 0) ctx.moveTo(s.x, s.y);
+        else ctx.lineTo(s.x, s.y);
+      });
+      ctx.stroke();
+    }
 
-    drawField();
+    function drawParticle() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      ctx.fillStyle = '#ffd36e';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function updateHud() {
+      if (!particle || hasCompileError) {
+        posLabel.textContent = '없음';
+        vecLabel.textContent = '없음';
+        magLabel.textContent = '없음';
+        trailLabel.textContent = String(trail.length);
+        return;
+      }
+
+      try {
+        const field = evaluateField(particle.x, particle.y);
+        posLabel.textContent = `(${particle.x.toFixed(3)}, ${particle.y.toFixed(3)})`;
+        vecLabel.textContent = `(${field.vx.toFixed(3)}, ${field.vy.toFixed(3)})`;
+        magLabel.textContent = field.mag.toFixed(3);
+        trailLabel.textContent = String(trail.length);
+      } catch {
+        vecLabel.textContent = '계산 실패';
+        magLabel.textContent = '계산 실패';
+        trailLabel.textContent = String(trail.length);
+      }
+    }
+
+    function render() {
+      const zoom = Number(zoomInput.value);
+      const cameraX = particle ? particle.x : 0;
+      const cameraY = particle ? particle.y : 0;
+
+      drawBackground();
+      drawGrid(cameraX, cameraY, zoom);
+
+      if (!hasCompileError) {
+        drawRelativeField(cameraX, cameraY, zoom);
+      }
+
+      drawTrail(cameraX, cameraY, zoom);
+      if (particle) drawParticle();
+      updateHud();
+    }
+
+    function step(dtReal) {
+      if (!running || !particle || hasCompileError) return;
+
+      const dt = Number(dtInput.value) * Math.min(3, dtReal * 60);
+      const speed = Number(speedInput.value);
+
+      try {
+        const field = evaluateField(particle.x, particle.y);
+        const maxStep = 1.0;
+        let dx = field.vx * dt * speed;
+        let dy = field.vy * dt * speed;
+        const stepMag = Math.hypot(dx, dy);
+        if (stepMag > maxStep) {
+          dx = dx / stepMag * maxStep;
+          dy = dy / stepMag * maxStep;
+        }
+
+        particle.x += dx;
+        particle.y += dy;
+        trail.push({ x: particle.x, y: particle.y });
+        if (trail.length > 1800) trail.shift();
+      } catch (err) {
+        running = false;
+        toggleBtn.textContent = '재생';
+        setStatus('시뮬레이션 정지: ' + err.message, true);
+      }
+    }
+
+    function animate(timestamp) {
+      if (lastTimestamp == null) lastTimestamp = timestamp;
+      const dtReal = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+      lastTimestamp = timestamp;
+      step(dtReal);
+      render();
+      requestAnimationFrame(animate);
+    }
+
+    function placeParticleFromClick(event) {
+      if (hasCompileError) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const sx = (event.clientX - rect.left) * scaleX;
+      const sy = (event.clientY - rect.top) * scaleY;
+      const zoom = Number(zoomInput.value);
+
+      const cameraX = particle ? particle.x : 0;
+      const cameraY = particle ? particle.y : 0;
+      const world = screenToWorld(sx, sy, cameraX, cameraY, zoom);
+
+      particle = { x: world.x, y: world.y };
+      trail = [{ x: particle.x, y: particle.y }];
+      setStatus(`입자 배치 완료: (${particle.x.toFixed(3)}, ${particle.y.toFixed(3)})`, false);
+      render();
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      if (!particle) {
+        setStatus('먼저 캔버스를 클릭해 입자를 배치하세요.', true);
+        return;
+      }
+      if (hasCompileError) return;
+      running = !running;
+      toggleBtn.textContent = running ? '일시정지' : '재생';
+      setStatus(running ? '재생 중' : '일시정지됨', false);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      particle = null;
+      trail = [];
+      running = false;
+      toggleBtn.textContent = '재생';
+      setStatus('입자를 제거했습니다. 캔버스를 클릭해 새로 배치하세요.', false);
+      render();
+    });
+
+    canvas.addEventListener('click', placeParticleFromClick);
+
+    [fxInput, fyInput].forEach(input => {
+      input.addEventListener('input', () => {
+        updateFieldFunctions();
+        render();
+      });
+    });
+
+    [speedInput, arrowScaleInput, zoomInput, dtInput].forEach(input => {
+      input.addEventListener('input', render);
+    });
+
+    updateFieldFunctions();
+    render();
+    requestAnimationFrame(animate);
   </script>
 </body>
 </html>
