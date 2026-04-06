@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D Vector Field Viewer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a31;
+      --grid: #334166;
+      --axis: #91a4d6;
+      --text: #e8edff;
+      --muted: #a9b6dc;
+      --accent: #7fb3ff;
+      --error: #ff9a9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0a1020 0%, #0f1730 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: rgba(18, 26, 49, 0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 24px 10px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+    }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      padding: 18px 24px 24px;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #0d1428;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    button {
+      background: linear-gradient(180deg, #2c5db7, #234c95);
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .canvas-wrap {
+      padding: 0 24px 24px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 920px;
+      aspect-ratio: 1;
+      margin: 0 auto;
+      background: #08101f;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+    }
+
+    .status {
+      min-height: 24px;
+      padding: 0 24px 24px;
+      color: var(--muted);
+    }
+
+    .status.error { color: var(--error); }
+
+    .examples {
+      padding: 0 24px 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    code {
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 840px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .controls { grid-template-columns: 1fr; }
+      body { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>2차원 벡터장 시각화</h1>
+      <p class="sub">정수 격자점 (x, y), -12 ≤ x,y ≤ 12 에서 벡터를 화살표로 그립니다. 식은 JavaScript 문법으로 입력하세요.</p>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label for="fx">Fₓ(x, y)</label>
+        <input id="fx" value="-y" />
+      </div>
+      <div class="control">
+        <label for="fy">Fᵧ(x, y)</label>
+        <input id="fy" value="x" />
+      </div>
+      <div class="control">
+        <label for="scale">화살표 길이 배율</label>
+        <input id="scale" type="number" value="0.7" step="0.1" min="0.1" max="5" />
+      </div>
+      <div class="control" style="justify-content: end;">
+        <label>&nbsp;</label>
+        <button id="drawBtn">그리기</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="920" height="920"></canvas>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="examples">
+      예시 식: <code>-y</code>, <code>x</code> / <code>x</code>, <code>y</code> / <code>Math.sin(y)</code>, <code>Math.cos(x)</code> / <code>x/(x*x+y*y+1)</code>, <code>y/(x*x+y*y+1)</code>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const fxInput = document.getElementById('fx');
+    const fyInput = document.getElementById('fy');
+    const scaleInput = document.getElementById('scale');
+    const drawBtn = document.getElementById('drawBtn');
+    const statusEl = document.getElementById('status');
+
+    const RANGE = 12;
+    const COUNT = RANGE * 2 + 1;
+
+    function compileExpression(expr) {
+      return new Function('x', 'y', `return (${expr});`);
+    }
+
+    function toCanvasX(x, size, padding) {
+      return padding + ((x + RANGE) / (COUNT - 1)) * (size - padding * 2);
+    }
+
+    function toCanvasY(y, size, padding) {
+      return size - padding - ((y + RANGE) / (COUNT - 1)) * (size - padding * 2);
+    }
+
+    function drawArrow(x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 0.001) return;
+
+      const head = Math.max(6, Math.min(12, len * 0.35));
+      const angle = Math.atan2(dy, dx);
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(
+        x2 - head * Math.cos(angle - Math.PI / 6),
+        y2 - head * Math.sin(angle - Math.PI / 6)
+      );
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(
+        x2 - head * Math.cos(angle + Math.PI / 6),
+        y2 - head * Math.sin(angle + Math.PI / 6)
+      );
+      ctx.stroke();
+    }
+
+    function clearCanvas(size) {
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = '#08101f';
+      ctx.fillRect(0, 0, size, size);
+    }
+
+    function drawGrid(size, padding) {
+      ctx.lineWidth = 1;
+
+      for (let i = -RANGE; i <= RANGE; i++) {
+        const x = toCanvasX(i, size, padding);
+        const y = toCanvasY(i, size, padding);
+
+        ctx.strokeStyle = i === 0 ? '#91a4d6' : 'rgba(127, 179, 255, 0.16)';
+
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, size - padding);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(size - padding, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(232, 237, 255, 0.75)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      for (let i = -RANGE; i <= RANGE; i++) {
+        const x = toCanvasX(i, size, padding);
+        if (i !== 0) ctx.fillText(String(i), x, toCanvasY(0, size, padding) + 6);
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (let i = -RANGE; i <= RANGE; i++) {
+        const y = toCanvasY(i, size, padding);
+        if (i !== 0) ctx.fillText(String(i), toCanvasX(0, size, padding) + 6, y);
+      }
+    }
+
+    function drawField() {
+      const size = canvas.width;
+      const padding = 40;
+      const scale = Number(scaleInput.value);
+
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+
+      let fx, fy;
+      try {
+        fx = compileExpression(fxInput.value);
+        fy = compileExpression(fyInput.value);
+      } catch (err) {
+        statusEl.textContent = '식 문법 오류: ' + err.message;
+        statusEl.className = 'status error';
+        return;
+      }
+
+      clearCanvas(size);
+      drawGrid(size, padding);
+
+      const spacing = (size - padding * 2) / (COUNT - 1);
+      const maxArrow = spacing * 0.42 * scale;
+
+      const values = [];
+      let maxMag = 0;
+
+      try {
+        for (let y = -RANGE; y <= RANGE; y++) {
+          for (let x = -RANGE; x <= RANGE; x++) {
+            const vx = Number(fx(x, y));
+            const vy = Number(fy(x, y));
+            if (!Number.isFinite(vx) || !Number.isFinite(vy)) {
+              throw new Error(`(${x}, ${y}) 에서 값이 유한하지 않습니다.`);
+            }
+            const mag = Math.hypot(vx, vy);
+            values.push({ x, y, vx, vy, mag });
+            if (mag > maxMag) maxMag = mag;
+          }
+        }
+      } catch (err) {
+        statusEl.textContent = '계산 오류: ' + err.message;
+        statusEl.className = 'status error';
+        return;
+      }
+
+      ctx.strokeStyle = '#7fb3ff';
+      ctx.lineWidth = 2;
+
+      for (const p of values) {
+        const cx = toCanvasX(p.x, size, padding);
+        const cy = toCanvasY(p.y, size, padding);
+
+        if (p.mag === 0 || maxMag === 0) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 1.7, 0, Math.PI * 2);
+          ctx.fillStyle = '#7fb3ff';
+          ctx.fill();
+          continue;
+        }
+
+        const ux = p.vx / p.mag;
+        const uy = p.vy / p.mag;
+        const len = (p.mag / maxMag) * maxArrow;
+
+        const ex = cx + ux * len;
+        const ey = cy - uy * len;
+        drawArrow(cx, cy, ex, ey);
+      }
+
+      statusEl.textContent = `표시 완료: ${COUNT}×${COUNT} 격자, 총 ${COUNT * COUNT}개 벡터`;
+    }
+
+    drawBtn.addEventListener('click', drawField);
+    fxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
+    fyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
+    scaleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') drawField(); });
+
+    drawField();
+  </script>
+</body>
+</html>
