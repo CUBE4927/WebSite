@@ -1341,6 +1341,11 @@
       renderCircle(metaAccidentals.textContent);
     });
     document.addEventListener('keydown', (event) => {
+      const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+
+      if (keys.includes(e.key)) {
+        e.preventDefault();
+      }
       if (!layout.classList.contains('show-detail')) return;
     
       if (event.key === 'ArrowLeft') currentModeIndex = (currentModeIndex + 5) % 7 + 1;
