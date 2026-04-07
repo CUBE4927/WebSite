@@ -414,7 +414,8 @@
     
     .mutation-panel {
       display: grid;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: 44px 1fr;
+      height: 100%;
     }
     
     .mutation-head {
@@ -423,7 +424,7 @@
       gap: 14px;
       margin-bottom: 0;
       padding: 0 6px;
-      min-height: 46px; /* 테이블 thead 높이 비슷하게 */
+      min-height: 44px; /* 테이블 thead 높이 비슷하게 */
       align-items: center;
     }
     
@@ -444,7 +445,7 @@
     
     .mutation-button {
       width: 100%;
-      height: 100%;
+      height: calc(100% - 8px);
       min-height: 0;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.10);
@@ -457,7 +458,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      align-self: stretch;
+      align-self: center;
     }
     
     .mutation-button:disabled {
@@ -785,7 +786,7 @@
             </div>
             <div class="mutation-panel">
               <div class="mutation-head">
-                <div class="mutation-col-title">#</div>
+                <div class="mutation-col-title">♯</div>
                 <div class="mutation-col-title">♭</div>
               </div>
               <div class="mutation-grid" id="mutationGrid"></div>
@@ -947,16 +948,16 @@
       const triadMap = {
         'dim|dim': 'sus2♭5',
         'dim|per': 'sus2',
-        'dim|aug': 'sus2#5',
+        'dim|aug': 'sus2♯5',
         'min|dim': 'dim',
         'min|per': 'min',
-        'min|aug': 'min#5',
+        'min|aug': 'min♯5',
         'maj|dim': 'maj♭5',
         'maj|per': 'maj',
         'maj|aug': 'aug',
         'aug|dim': 'sus4♭5',
         'aug|per': 'sus4',
-        'aug|aug': 'sus4#5',
+        'aug|aug': 'sus4♯5',
       };
       return triadMap[key] || '';
     }
