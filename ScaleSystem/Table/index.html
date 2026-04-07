@@ -398,6 +398,77 @@
       font-size: 0.82rem;
     }
 
+    .detail-body-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 20px;
+      align-items: start;
+    }
+    
+    .detail-table-wrap {
+      min-width: 0;
+    }
+    
+    .mutation-panel {
+      min-width: 0;
+      padding-top: 4px;
+    }
+    
+    .mutation-head {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 12px;
+      padding: 0 6px;
+    }
+    
+    .mutation-col-title {
+      text-align: center;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--text);
+      opacity: 0.9;
+    }
+    
+    .mutation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    
+    .mutation-button {
+      min-height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: var(--sub);
+      font: inherit;
+      font-size: 0.88rem;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    
+    .mutation-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.28;
+      color: rgba(255,255,255,0.45);
+      background: rgba(255,255,255,0.02);
+    }
+    
+    .mutation-button.sharp:not(:disabled) {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(138,162,255,0.24);
+    }
+    
+    .mutation-button.flat:not(:disabled) {
+      color: rgba(255,255,255,0.96);
+      background: rgba(184,140,255,0.36);
+      border-color: rgba(184,140,255,0.72);
+      box-shadow: 0 0 0 1px rgba(184,140,255,0.34) inset, 0 6px 16px rgba(184,140,255,0.22);
+    }
+
     @media (max-width: 1180px) {
       .layout,
       .layout.show-detail {
@@ -410,6 +481,13 @@
         opacity: 1;
         pointer-events: auto;
         transform: none;
+      }
+      .detail-body-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .mutation-panel {
+        padding-top: 0;
       }
     }
 
@@ -672,25 +750,35 @@
               <div class="meta-value" id="metaAccidentals">Natural / No accidentals</div>
             </div>
           </div>
-
-          <table class="detail-table">
-            <thead>
-              <tr>
-                <th>Note</th>
-                <th>Interval</th>
-                <th>Triad</th>
-              </tr>
-            </thead>
-            <tbody id="detailBody">
-              <tr><td>D</td><td>per 1st</td><td>min</td></tr>
-              <tr><td>E</td><td>maj 2nd</td><td>min</td></tr>
-              <tr><td>F</td><td>min 3rd</td><td>maj</td></tr>
-              <tr><td>G</td><td>per 4th</td><td>maj</td></tr>
-              <tr><td>A</td><td>per 5th</td><td>min</td></tr>
-              <tr><td>B</td><td>maj 6th</td><td>dim</td></tr>
-              <tr><td>C</td><td>min 7th</td><td>maj</td></tr>
-            </tbody>
-          </table>
+          <div class="detail-body-grid">
+            <div class="detail-table-wrap">
+              <table class="detail-table">
+                <thead>
+                  <tr>
+                    <th>Note</th>
+                    <th>Interval</th>
+                    <th>Triad</th>
+                  </tr>
+                </thead>
+                <tbody id="detailBody">
+                  <tr><td>D</td><td>per 1st</td><td>min</td></tr>
+                  <tr><td>E</td><td>maj 2nd</td><td>min</td></tr>
+                  <tr><td>F</td><td>min 3rd</td><td>maj</td></tr>
+                  <tr><td>G</td><td>per 4th</td><td>maj</td></tr>
+                  <tr><td>A</td><td>per 5th</td><td>min</td></tr>
+                  <tr><td>B</td><td>maj 6th</td><td>dim</td></tr>
+                  <tr><td>C</td><td>min 7th</td><td>maj</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mutation-panel">
+              <div class="mutation-head">
+                <div class="mutation-col-title">#</div>
+                <div class="mutation-col-title">♭</div>
+              </div>
+              <div class="mutation-grid" id="mutationGrid"></div>
+            </div>
+          </div>
         </section>
       </div>
     </div>
@@ -710,6 +798,7 @@
     const detailBody = document.getElementById('detailBody');
     const circleCard = document.getElementById('circleCard');
     const modeNameEl = document.getElementById('modeName');
+    const mutationGrid = document.getElementById('mutationGrid');
 
     const modeNames = [
 ['Lydian','Ionian','Mixolydian','Dorian','Aeolian','Phrygian','Locrian'],
@@ -896,6 +985,21 @@
 
       return map;
     }
+    function getAllFamilyModeData() {
+      return rows.map((row, familyIndex) => {
+        const baseSequence = row.cells[0].textContent.trim();
+        const modes = [];
+        for (let i = 1; i <= 7; i++) {
+          modes.push({
+            familyIndex,
+            modeIndex: i - 1,
+            accidentalText: row.cells[i]?.textContent.trim() || 'Natural / No accidentals',
+            sequence: buildIntervalSequence(row.cells[i]?.textContent.trim() || 'Natural / No accidentals'),
+          });
+        }
+        return { baseSequence, modes };
+      });
+    }
 
     function buildAppliedPitches(accidentalText) {
       const activeMap = parseModeAccidentals(accidentalText);
@@ -913,7 +1017,23 @@
       });
       return sequence.join('-');
     }
-
+    function parseSequenceString(seqStr) {
+      return seqStr.split('-').map(Number);
+    }
+    
+    function mutateSequence(sequenceStr, degreeIndex, direction) {
+      const seq = parseSequenceString(sequenceStr);
+      const n = seq.length;
+    
+      const target = degreeIndex;
+      const next = (degreeIndex + 1) % n;
+    
+      seq[target] += direction;
+      seq[next] -= direction;
+    
+      if (seq[target] <= 0 || seq[next] <= 0) return null;
+      return seq.join('-');
+    }
     function buildDetailRows(accidentalText) {
       const activeMap = parseModeAccidentals(accidentalText);
       const appliedPitches = buildAppliedPitches(accidentalText);
@@ -939,7 +1059,59 @@
         ];
       });
     }
-
+    function findModeBySequence(sequenceStr) {
+      const allData = getAllFamilyModeData();
+    
+      for (const family of allData) {
+        for (const mode of family.modes) {
+          if (mode.sequence === sequenceStr) {
+            return mode;
+          }
+        }
+      }
+      return null;
+    }
+    function renderMutationButtons(accidentalText) {
+      const currentSequence = buildIntervalSequence(accidentalText);
+      const labels = ['D', 'E', 'F', 'G', 'A', 'B', 'C'];
+    
+      mutationGrid.innerHTML = '';
+    
+      for (let i = 0; i < 7; i++) {
+        const sharpSeq = mutateSequence(currentSequence, i, +1);
+        const sharpMatch = sharpSeq ? findModeBySequence(sharpSeq) : null;
+    
+        const sharpBtn = document.createElement('button');
+        sharpBtn.className = 'mutation-button sharp';
+        sharpBtn.disabled = !sharpMatch;
+        sharpBtn.textContent = sharpMatch
+          ? `F${String(sharpMatch.familyIndex + 1).padStart(2, '0')} · M${String(sharpMatch.modeIndex + 1).padStart(2, '0')}`
+          : '';
+        if (sharpMatch) {
+          sharpBtn.addEventListener('click', () => {
+            updateDetailFromCell(rows[sharpMatch.familyIndex], sharpMatch.modeIndex + 1);
+          });
+        }
+    
+        const flatSeq = mutateSequence(currentSequence, i, -1);
+        const flatMatch = flatSeq ? findModeBySequence(flatSeq) : null;
+    
+        const flatBtn = document.createElement('button');
+        flatBtn.className = 'mutation-button flat';
+        flatBtn.disabled = !flatMatch;
+        flatBtn.textContent = flatMatch
+          ? `F${String(flatMatch.familyIndex + 1).padStart(2, '0')} · M${String(flatMatch.modeIndex + 1).padStart(2, '0')}`
+          : '';
+        if (flatMatch) {
+          flatBtn.addEventListener('click', () => {
+            updateDetailFromCell(rows[flatMatch.familyIndex], flatMatch.modeIndex + 1);
+          });
+        }
+    
+        mutationGrid.appendChild(sharpBtn);
+        mutationGrid.appendChild(flatBtn);
+      }
+    }
     function renderDetailTable(rowsData) {
       detailBody.innerHTML = rowsData.map((row) => `
         <tr>
@@ -1039,6 +1211,7 @@
 
       renderCircle(accidentalText);
       renderDetailTable(buildDetailRows(accidentalText));
+      renderMutationButtons(accidentalText);
       layout.classList.add('show-detail');
     }
 
