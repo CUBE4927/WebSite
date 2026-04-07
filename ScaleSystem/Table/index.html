@@ -240,7 +240,7 @@
 
     .visual-top {
       display: grid;
-      grid-template-columns: minmax(240px, 1fr) minmax(150px, 180px);
+      grid-template-columns: 1fr;
       gap: 18px;
       align-items: center;
     }
@@ -253,13 +253,14 @@
     }
 
     .circle-card {
-      width: min(100%, 260px);
+      width: min(100%, 320px);
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       border: 1px solid var(--line);
       background: radial-gradient(circle at center, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
       position: relative;
       overflow: hidden;
+      margin: 0 auto;
     }
 
     .circle-ring {
@@ -274,14 +275,14 @@
 
     .note-node {
       position: absolute;
-      width: 26px;
-      height: 26px;
-      margin: -13px;
+      width: 28px;
+      height: 28px;
+      margin: -14px;
       display: grid;
       place-items: center;
       border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.10);
-      color: rgba(255,255,255,0.38);
+      color: rgba(255,255,255,0.34);
       background: rgba(255,255,255,0.03);
       font-size: 0.62rem;
       line-height: 1;
@@ -294,7 +295,15 @@
       color: white;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       border-color: transparent;
-      box-shadow: 0 0 14px rgba(163,136,255,0.45);
+      box-shadow: 0 8px 20px rgba(138,162,255,0.24);
+    }
+
+    .note-node.enharmonic-ghost {
+      color: rgba(255,255,255,0.96);
+      background: rgba(184,140,255,0.36);
+      border-color: rgba(184,140,255,0.72);
+      box-shadow: 0 0 0 1px rgba(184,140,255,0.34) inset, 0 6px 16px rgba(184,140,255,0.22);
+      opacity: 1;
     }
 
     .note-node.center-tonic {
@@ -326,54 +335,6 @@
     .mode-tabs button.active {
       background: rgba(255,255,255,0.08);
       color: var(--text);
-    }
-
-    .signature-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.035);
-      padding: 10px 10px;
-      min-height: 180px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .signature-title {
-      color: var(--sub);
-      font-size: 0.88rem;
-      text-align: center;
-    }
-
-    .staff {
-      position: relative;
-      height: 110px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.015);
-      overflow: hidden;
-    }
-
-    .staff-line {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      height: 1px;
-      background: rgba(255,255,255,0.18);
-    }
-
-    .ks-mark {
-      position: absolute;
-      font-size: 1.25rem;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .signature-label {
-      text-align: center;
-      color: var(--sub);
-      font-size: 0.9rem;
-      line-height: 1.35;
     }
 
     .detail-head {
@@ -463,10 +424,6 @@
         align-items: flex-start;
       }
 
-      .visual-top {
-        grid-template-columns: 1fr;
-      }
-
       .circle-card {
         width: min(100%, 280px);
       }
@@ -509,144 +466,14 @@
             </thead>
             <tbody>
               <tr>
-                <td class="mono">2-1-1-3-2-1-2</td>
-                <td class="acc-cell">A♯ B♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">C♯ E♭ F♯ G♯</td>
-                <td class="acc-cell">A♭ C♯ F♯</td>
-                <td class="acc-cell">G♭</td>
-                <td class="acc-cell">B♭ C♭</td>
-                <td class="acc-cell">B♭ E♭ F♭</td>
-                <td class="acc-cell">A♭ B𝄫 E♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-2-1-1-2-3-1</td>
-                <td class="acc-cell">A♯ B♯ C♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">C♯ E♭ G♯</td>
-                <td class="acc-cell">A♭ B♭ C♯ F♯</td>
-                <td class="acc-cell">A♭ G♭</td>
-                <td class="acc-cell">B♭ E♭ F♭ G♭</td>
-                <td class="acc-cell">A♭ B𝄫 C♭ E♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-3-1-1-3-2-1</td>
-                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯</td>
-                <td class="acc-cell">B♭ C♯ E♭ F♯ G♯</td>
-                <td class="acc-cell">A♭ C♯ E♭ F♯</td>
-                <td class="acc-cell">B♭ C♭ G♭</td>
-                <td class="acc-cell">B♭ C♭ E♭ F♭</td>
-                <td class="acc-cell">A♭ B𝄫 E♭ F♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-2-1-1-3-1-2</td>
-                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">B♭ C♯ F♯ G♯</td>
-                <td class="acc-cell">C♯ E♭ F♯</td>
-                <td class="acc-cell">A♭ F♯</td>
-                <td class="acc-cell">B♭ G♭</td>
-                <td class="acc-cell">B♭ C♭ E♭</td>
-                <td class="acc-cell">A♭ B♭ E♭ F♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-1-2-1-3-2-1</td>
-                <td class="acc-cell">A♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ C♯ G♯</td>
-                <td class="acc-cell">C♯ E♭ G♯</td>
-                <td class="acc-cell">C♭ E♭</td>
-                <td class="acc-cell">B♭ G♭</td>
-                <td class="acc-cell">A♭ B♭ E♭</td>
-                <td class="acc-cell">A♭ B𝄫 E♭ F♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-3-2-1-1-2-2</td>
-                <td class="acc-cell">C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">A♯ B♭ C♯ F♯</td>
-                <td class="acc-cell">B♭ G♯</td>
-                <td class="acc-cell">A♭ B♭ C♭</td>
-                <td class="acc-cell">A♭ B♭ E♭ F♭</td>
-                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-2-2-2-2-2-1</td>
-                <td class="acc-cell">A♯ C♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">A♯ C♯ E♯ G♯</td>
-                <td class="acc-cell">A♯ B♭ C♯ F♯</td>
-                <td class="acc-cell">C♯ G♯</td>
-                <td class="acc-cell">A♭ B♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭</td>
-                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-2-3-1-1-3-1</td>
-                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">B♯ C♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ E♯ G♯</td>
-                <td class="acc-cell">B♭ C♭ E♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭</td>
-                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-3-1-2-1-3-1</td>
-                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">C♯ E♯ G♯</td>
-                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
-                <td class="acc-cell">A♭ C♭ E♭ F♯</td>
-                <td class="acc-cell">B♭ C♭ E♭ F♭</td>
-                <td class="acc-cell">A♭ B𝄫 E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-2-3-1-2-1-2</td>
-                <td class="acc-cell">A♯ C♯ E♯ F𝄪 G♯</td>
-                <td class="acc-cell">A♯ C♯ E♯ F♯</td>
-                <td class="acc-cell">C♯ G♯</td>
-                <td class="acc-cell">A♭ C♯ E♭</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭ F♯</td>
-                <td class="acc-cell">B♭ C♭ E♭ G♭</td>
-                <td class="acc-cell">A♭ B𝄫 E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">1-3-1-2-2-1-2</td>
-                <td class="acc-cell">A♯ C♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">A♯ C♯ E♯ G♯</td>
-                <td class="acc-cell">C♯ E♭</td>
-                <td class="acc-cell">A♭ B♭ C♯ F♯</td>
-                <td class="acc-cell">B♭ E♭ G♭</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭</td>
-                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-1-2-3-1-1-2</td>
-                <td class="acc-cell">B♯ C♯ F𝄪 G♯</td>
-                <td class="acc-cell">B♯ C♯ E♯ F♯</td>
-                <td class="acc-cell">A♯ E♯ G♯</td>
+                <td class="mono">2-1-2-2-2-1-2</td>
+                <td class="acc-cell">C♯ F♯ G♯</td>
                 <td class="acc-cell">C♯ F♯</td>
-                <td class="acc-cell">B♭ C♭ E♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ E♭ F♭ G♭</td>
-                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-1-3-1-1-2-2</td>
-                <td class="acc-cell">B♯ C♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">C♯ E♯ G♯</td>
-                <td class="acc-cell">A♯ E♯ F♯</td>
-                <td class="acc-cell">B♭ C♯ E♭ F♯</td>
-                <td class="acc-cell">B♭ C♭ E♭ G♭</td>
-                <td class="acc-cell">A♭ C♯ E♭ F♭ G♭</td>
-                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
-              </tr>
-              <tr>
-                <td class="mono">2-1-2-2-1-3-1</td>
-                <td class="acc-cell">C♯ E♯ F♯ G♯</td>
-                <td class="acc-cell">A♯ C♯ F♯</td>
-                <td class="acc-cell">G♯</td>
-                <td class="acc-cell">B♭ C♯</td>
-                <td class="acc-cell">B♭ E♭ F♯</td>
-                <td class="acc-cell">A♭ E♭</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭ G♭</td>
+                <td class="acc-cell">F♯</td>
+                <td class="acc-cell empty-acc"></td>
+                <td class="acc-cell">B♭</td>
+                <td class="acc-cell">B♭ E♭</td>
+                <td class="acc-cell">A♭ B♭ E♭</td>
               </tr>
               <tr>
                 <td class="mono">2-2-1-2-1-2-2</td>
@@ -659,14 +486,144 @@
                 <td class="acc-cell">A♭ B♭ E♭ G♭</td>
               </tr>
               <tr>
-                <td class="mono">2-1-2-2-2-1-2</td>
-                <td class="acc-cell">C♯ F♯ G♯</td>
-                <td class="acc-cell">C♯ F♯</td>
-                <td class="acc-cell">F♯</td>
-                <td class="acc-cell empty-acc"></td>
-                <td class="acc-cell">B♭</td>
-                <td class="acc-cell">A♭ B♭</td>
-                <td class="acc-cell">A♭ B♭ E♭</td>
+                <td class="mono">1-2-2-2-2-2-1</td>
+                <td class="acc-cell">A♯ B♯ C♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ F♯ G♯</td>
+                <td class="acc-cell">B♭ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♭</td>
+                <td class="acc-cell">A♭ B♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-2-1-1-3-1-2</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">B♭ C♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ F♯</td>
+                <td class="acc-cell">B♭ G♭</td>
+                <td class="acc-cell">B♭ C♭ E♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-2-2-1-2</td>
+                <td class="acc-cell">A♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ G♯</td>
+                <td class="acc-cell">B♭ C♯ F♯</td>
+                <td class="acc-cell">E♭ F♯</td>
+                <td class="acc-cell">A♭</td>
+                <td class="acc-cell">B♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-3-1-1-2</td>
+                <td class="acc-cell">C♯ F𝄪 G♯</td>
+                <td class="acc-cell">B♯ C♯ F♯</td>
+                <td class="acc-cell">E♯ F♯</td>
+                <td class="acc-cell">A♯</td>
+                <td class="acc-cell">B♭ E♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ E♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-2-1-1-2-2</td>
+                <td class="acc-cell">C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ B♯ C♯ F♯</td>
+                <td class="acc-cell">A♯ G♯</td>
+                <td class="acc-cell">B♭ E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ E♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-1-3-2-1</td>
+                <td class="acc-cell">A♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ C♯ G♯</td>
+                <td class="acc-cell">E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯</td>
+                <td class="acc-cell">E♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ C♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-2-3-1-2-1-2</td>
+                <td class="acc-cell">A♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯</td>
+                <td class="acc-cell">E♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯</td>
+                <td class="acc-cell">A♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-2-1-1-2-3-1</td>
+                <td class="acc-cell">A♯ B♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ F♯</td>
+                <td class="acc-cell">A♭ G♭</td>
+                <td class="acc-cell">B♭ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-1-3-2-1-2</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">C♯ E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ F♯</td>
+                <td class="acc-cell">G♭</td>
+                <td class="acc-cell">B♭ C♭</td>
+                <td class="acc-cell">B♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-2-1-3-1</td>
+                <td class="acc-cell">C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯ F♯</td>
+                <td class="acc-cell">G♯</td>
+                <td class="acc-cell">B♭ C♯</td>
+                <td class="acc-cell">B♭ E♭ F♯</td>
+                <td class="acc-cell">A♭ E♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-3-1-1-2-2</td>
+                <td class="acc-cell">B♯ C♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♯ F♯</td>
+                <td class="acc-cell">A♯ F♯</td>
+                <td class="acc-cell">B♭ G♯</td>
+                <td class="acc-cell">B♭ C♯ E♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♯</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-1-3-2-1</td>
+                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">B♭ C♯ E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ G♭</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-2-1-3-1</td>
+                <td class="acc-cell">B♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">B♭ C♯ G♯</td>
+                <td class="acc-cell">B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-2-3-1-1-3-1</td>
+                <td class="acc-cell">B♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">B♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">A♯ E♯ F♯</td>
+                <td class="acc-cell">B♭ C♯ E♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭</td>
               </tr>
             </tbody>
           </table>
@@ -692,18 +649,6 @@
                 <button id="fifthsBtn" type="button">Fifths</button>
               </div>
             </div>
-
-            <div class="signature-card">
-              <div class="signature-title">Key Signature</div>
-              <div class="staff" id="staff" aria-label="Bass clef key signature placeholder">
-                <div class="staff-line" style="top: 16px;"></div>
-                <div class="staff-line" style="top: 34px;"></div>
-                <div class="staff-line" style="top: 52px;"></div>
-                <div class="staff-line" style="top: 70px;"></div>
-                <div class="staff-line" style="top: 88px;"></div>
-              </div>
-              <div class="signature-label" id="signatureLabel">Bass clef / D centered</div>
-            </div>
           </div>
         </section>
 
@@ -712,26 +657,21 @@
             <div>
               <div class="detail-title" id="detailTitle">Mode Details</div>
               <div class="detail-sub" id="detailSub">Selected mode harmonic summary</div>
+              <div id="modeName" style="margin-top:6px; font-size:0.95rem; color:var(--accent2);"></div>
             </div>
+            <div class="family-badge" id="detailBadge">Family 01 · Mode 01</div>
+          </div>
             <div class="family-badge" id="detailBadge">Family 01 · Mode 01</div>
           </div>
 
           <div class="detail-meta">
             <div class="meta-card">
               <div class="meta-label">Interval Sequence</div>
-              <div class="meta-value mono" id="metaSequence"></div>
+              <div class="meta-value mono" id="metaSequence">2-1-2-2-2-1-2</div>
             </div>
             <div class="meta-card">
               <div class="meta-label">Accidentals</div>
-              <div class="meta-value" id="metaAccidentals"></div>
-            </div>
-            <div class="meta-card">
-              <div class="meta-label">Circle View</div>
-              <div class="meta-value" id="metaCircle">Chromatic</div>
-            </div>
-            <div class="meta-card">
-              <div class="meta-label">Reference</div>
-              <div class="meta-value" id="metaReference">Bass clef / D centered</div>
+              <div class="meta-value" id="metaAccidentals">C♯ F♯ G♯</div>
             </div>
           </div>
 
@@ -741,10 +681,17 @@
                 <th>Note</th>
                 <th>Interval</th>
                 <th>Triad</th>
-                <th>Seventh</th>
               </tr>
             </thead>
-            <tbody id="detailBody"></tbody>
+            <tbody id="detailBody">
+              <tr><td>D</td><td>per 1st</td><td>min</td></tr>
+              <tr><td>E</td><td>per 2nd</td><td>dim</td></tr>
+              <tr><td>F</td><td>min 3rd</td><td>maj</td></tr>
+              <tr><td>G</td><td>per 4th</td><td>maj</td></tr>
+              <tr><td>A</td><td>per 5th</td><td>min</td></tr>
+              <tr><td>B</td><td>per 6th</td><td>dim</td></tr>
+              <tr><td>C</td><td>min 7th</td><td>maj</td></tr>
+            </tbody>
           </table>
         </section>
       </div>
@@ -760,56 +707,189 @@
     const detailBadge = document.getElementById('detailBadge');
     const metaSequence = document.getElementById('metaSequence');
     const metaAccidentals = document.getElementById('metaAccidentals');
-    const metaCircle = document.getElementById('metaCircle');
-    const metaReference = document.getElementById('metaReference');
-    const signatureLabel = document.getElementById('signatureLabel');
     const chromaticBtn = document.getElementById('chromaticBtn');
     const fifthsBtn = document.getElementById('fifthsBtn');
     const detailBody = document.getElementById('detailBody');
     const circleCard = document.getElementById('circleCard');
-    const staff = document.getElementById('staff');
+    const modeNameEl = document.getElementById('modeName');
 
-    const degreeLetters = ['D', 'E', 'F', 'G', 'A', 'B', 'C'];
-    const naturalSemitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    const accidentalOffsets = { '♭': -1, '𝄫': -2, '♯': 1, '𝄪': 2 };
-
-    // 12시 방향 = D
-    // 현재는 7방향만 사용
-    const circleOrders = {
-      Chromatic: ['D', 'E', 'F', 'G', 'A', 'B', 'C'],
-      Fifths: ['D', 'A', 'E', 'B', 'F', 'C', 'G']
-    };
-
-    // 바깥 → 안쪽: 𝄪, ♯, ♮, ♭, 𝄫
-    const circleLayers = [
-      { offset:  2, label: '𝄪', radius: 46 },
-      { offset:  1, label: '♯', radius: 38 },
-      { offset:  0, label: '',  radius: 30 },
-      { offset: -1, label: '♭', radius: 22 },
-      { offset: -2, label: '𝄫', radius: 14 }
+    const modeNames = [
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','',''],
+['','','','','','','']
     ];
-
-    const sharpOrder = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
-    const flatOrder = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
-    const sharpPositions = { F: 42, C: 24, G: 48, D: 30, A: 54, E: 36, B: 60 };
-    const flatPositions = { B: 36, E: 54, A: 30, D: 48, G: 24, C: 42, F: 18 };
 
     let currentCircleMode = 'Chromatic';
 
-    function formatAccidental(offset) {
-      if (offset === 2) return '𝄪';
-      if (offset === 1) return '♯';
-      if (offset === -1) return '♭';
-      if (offset === -2) return '𝄫';
-      return '';
+    const naturalAnglesChromatic = {
+      D: 0,
+      E: 60,
+      F: 90,
+      G: 150,
+      A: 210,
+      B: 270,
+      C: 300,
+    };
+
+    const naturalAnglesFifths = {
+      F: -90,
+      C: -60,
+      G: -30,
+      D: 0,
+      A: 30,
+      E: 60,
+      B: 90,
+    };
+
+    const circleLayers = [
+      { offset: 2, label: '𝄪', radius: 46 },
+      { offset: 1, label: '♯', radius: 38 },
+      { offset: 0, label: '', radius: 30 },
+      { offset: -1, label: '♭', radius: 22 },
+      { offset: -2, label: '𝄫', radius: 14 },
+    ];
+
+    const layerRotationChromatic = {
+      '𝄫': -60,
+      '♭': -30,
+      '': 0,
+      '♯': 30,
+      '𝄪': 60,
+    };
+
+    const layerRotationFifths = {
+      '𝄫': -60,
+      '♭': 150,
+      '': 0,
+      '♯': -150,
+      '𝄪': 60,
+    };
+
+    const degreeLetters = ['D', 'E', 'F', 'G', 'A', 'B', 'C'];
+    const accidentalOffsets = { '♭': -1, '𝄫': -2, '♯': 1, '𝄪': 2 };
+    const basePC = { D: 2, E: 4, F: 5, G: 7, A: 9, B: 11, C: 0 };
+
+    const defaultDetailRows = [
+      ['D', 'per 1st', 'min'],
+      ['E', 'per 2nd', 'dim'],
+      ['F', 'min 3rd', 'maj'],
+      ['G', 'per 4th', 'maj'],
+      ['A', 'per 5th', 'min'],
+      ['B', 'per 6th', 'dim'],
+      ['C', 'min 7th', 'maj'],
+    ];
+
+    const dorianBaseRelativePitches = [0, 2, 3, 5, 7, 9, 10];
+    const dorianReferencePitchProfile = [0, 1.5, 3.5, 5, 7, 8.5, 10.5];
+    const intervalQualityByDelta = {
+      '-1.5': 'dim',
+      '-1': 'dim',
+      '-0.5': 'min',
+      '0': 'per',
+      '0.5': 'maj',
+      '1': 'aug',
+      '1.5': 'aug',
+    };
+    const degreeOrdinals = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
+
+    function rotateSequence(seqStr, k) {
+      const arr = seqStr.split('-').map(Number);
+      const n = arr.length;
+      const r = ((k % n) + n) % n;
+      return arr.slice(r).concat(arr.slice(0, r)).join('-');
+    }
+
+    function pitchClass(letter, offset) {
+      return (basePC[letter] + offset + 120) % 12;
+    }
+
+    function getSelectedPitchClasses(activeMap) {
+      const pcs = new Set();
+      degreeLetters.forEach((letter) => {
+        pcs.add(pitchClass(letter, activeMap[letter] || 0));
+      });
+      return pcs;
+    }
+
+    function formatNoteName(letter, offset) {
+      if (offset === 2) return `${letter}𝄪`;
+      if (offset === 1) return `${letter}♯`;
+      if (offset === -1) return `${letter}♭`;
+      if (offset === -2) return `${letter}𝄫`;
+      return letter;
+    }
+
+    function getRelativeIntervalName(baseSemitone, referencePitch, offset, degreeIndex) {
+      const appliedPitch = baseSemitone + offset;
+      const delta = appliedPitch - referencePitch;
+      const quality = intervalQualityByDelta[String(delta)];
+      if (!quality) {
+        return `${delta} ${degreeOrdinals[degreeIndex]}`;
+      }
+      return `${quality} ${degreeOrdinals[degreeIndex]}`;
+    }
+
+    function getTriad(thirdQuality, fifthQuality) {
+      const key = `${thirdQuality}|${fifthQuality}`;
+      const triadMap = {
+        'dim|dim': 'sus2♭5',
+        'dim|per': 'sus2',
+        'dim|aug': 'sus2#5',
+        'min|dim': 'dim',
+        'min|per': 'min',
+        'min|aug': 'min#5',
+        'maj|dim': 'maj♭5',
+        'maj|per': 'maj',
+        'maj|aug': 'aug',
+        'aug|dim': 'sus4♭5',
+        'aug|per': 'sus4',
+        'aug|aug': 'sus4#5',
+      };
+      return triadMap[key] || '';
+    }
+
+    function mod12(value) {
+      return ((value % 12) + 12) % 12;
+    }
+
+    function getThirdQualityFromSemitones(semitones) {
+      const map = {
+        2: 'dim',
+        3: 'min',
+        4: 'maj',
+        5: 'aug',
+      };
+      return map[mod12(semitones)] || '';
+    }
+
+    function getFifthQualityFromSemitones(semitones) {
+      const map = {
+        6: 'dim',
+        7: 'per',
+        8: 'aug',
+      };
+      return map[mod12(semitones)] || '';
     }
 
     function parseModeAccidentals(text) {
-      const map = Object.fromEntries(degreeLetters.map(letter => [letter, 0]));
+      const map = Object.fromEntries(degreeLetters.map((letter) => [letter, 0]));
       const trimmed = (text || '').trim();
-      if (!trimmed) return map;
+      if (!trimmed || trimmed === 'Natural / No accidentals') return map;
 
-      trimmed.split(/\s+/).forEach(token => {
+      trimmed.split(/\s+/).forEach((token) => {
         const match = token.match(/^([A-G])(𝄪|𝄫|♯|♭)?$/u);
         if (!match) return;
         map[match[1]] = accidentalOffsets[match[2] || ''] || 0;
@@ -818,94 +898,82 @@
       return map;
     }
 
-    function buildScaleData(accidentalText) {
-      const accidentalMap = parseModeAccidentals(accidentalText);
-      return degreeLetters.map(letter => {
-        const offset = accidentalMap[letter] || 0;
-        return {
-          letter,
-          offset,
-          noteName: letter + formatAccidental(offset),
-          pc: (naturalSemitones[letter] + offset + 12) % 12
-        };
+    function buildAppliedPitches(accidentalText) {
+      const activeMap = parseModeAccidentals(accidentalText);
+      return degreeLetters.map((letter, index) => {
+        const offset = activeMap[letter] || 0;
+        return dorianBaseRelativePitches[index] + offset;
       });
     }
 
-    function intervalLabelFromSemitones(degreeIndex, semitones) {
-      const lookup = {
-        0: { 0: 'P1', 1: 'A1' },
-        1: { 0: 'd2', 1: 'm2', 2: 'M2', 3: 'A2' },
-        2: { 2: 'd3', 3: 'm3', 4: 'M3', 5: 'A3' },
-        3: { 4: 'd4', 5: 'P4', 6: 'A4' },
-        4: { 6: 'd5', 7: 'P5', 8: 'A5' },
-        5: { 7: 'd6', 8: 'm6', 9: 'M6', 10: 'A6' },
-        6: { 9: 'd7', 10: 'm7', 11: 'M7', 0: 'A7' }
-      };
-      return lookup[degreeIndex]?.[semitones] || `${semitones} st`;
+    function buildIntervalSequence(accidentalText) {
+      const appliedPitches = buildAppliedPitches(accidentalText);
+      const sequence = appliedPitches.map((pitch, index) => {
+        const nextPitch = index === appliedPitches.length - 1 ? appliedPitches[0] + 12 : appliedPitches[index + 1];
+        return nextPitch - pitch;
+      });
+      return sequence.join('-');
     }
 
-    function triadQuality(intervals) {
-      const key = intervals.join(',');
-      const map = {
-        '0,4,7': 'M',
-        '0,3,7': 'm',
-        '0,3,6': 'dim',
-        '0,4,8': 'aug',
-        '0,2,7': 'sus2',
-        '0,5,7': 'sus4'
-      };
-      return map[key] || intervals.slice(1).join('/');
-    }
+    function buildDetailRows(accidentalText) {
+      const activeMap = parseModeAccidentals(accidentalText);
+      const appliedPitches = buildAppliedPitches(accidentalText);
 
-    function seventhQuality(intervals) {
-      const key = intervals.join(',');
-      const map = {
-        '0,4,7,11': 'M7',
-        '0,4,7,10': '7',
-        '0,3,7,10': 'm7',
-        '0,3,7,11': 'mM7',
-        '0,3,6,10': 'm7♭5',
-        '0,3,6,9': 'dim7',
-        '0,4,8,11': 'augM7',
-        '0,4,8,10': 'aug7'
-      };
-      return map[key] || intervals.slice(1).join('/');
-    }
+      return degreeLetters.map((letter, index) => {
+        const offset = activeMap[letter] || 0;
+        const thirdIndex = (index + 2) % 7;
+        const fifthIndex = (index + 4) % 7;
+        const thirdSemitones = mod12(appliedPitches[thirdIndex] - appliedPitches[index]);
+        const fifthSemitones = mod12(appliedPitches[fifthIndex] - appliedPitches[index]);
+        const thirdQuality = getThirdQualityFromSemitones(thirdSemitones);
+        const fifthQuality = getFifthQualityFromSemitones(fifthSemitones);
 
-    function buildDetailRows(scaleData) {
-      return scaleData.map((note, index) => {
-        const rootPc = scaleData[index].pc;
-        const thirdPc = scaleData[(index + 2) % 7].pc;
-        const fifthPc = scaleData[(index + 4) % 7].pc;
-        const seventhPc = scaleData[(index + 6) % 7].pc;
-        const triadIntervals = [0, (thirdPc - rootPc + 12) % 12, (fifthPc - rootPc + 12) % 12];
-        const seventhIntervals = [0, (thirdPc - rootPc + 12) % 12, (fifthPc - rootPc + 12) % 12, (seventhPc - rootPc + 12) % 12];
-        const relativeToTonic = (note.pc - scaleData[0].pc + 12) % 12;
         return [
-          note.noteName,
-          intervalLabelFromSemitones(index, relativeToTonic),
-          triadQuality(triadIntervals),
-          seventhQuality(seventhIntervals)
+          formatNoteName(letter, offset),
+          getRelativeIntervalName(
+            dorianBaseRelativePitches[index],
+            dorianReferencePitchProfile[index],
+            offset,
+            index,
+          ),
+          getTriad(thirdQuality, fifthQuality),
         ];
       });
     }
 
     function renderDetailTable(rowsData) {
-      detailBody.innerHTML = rowsData.map(row =>
-        '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td><td>' + row[3] + '</td></tr>'
-      ).join('');
+      detailBody.innerHTML = rowsData.map((row) => `
+        <tr>
+          <td>${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+        </tr>
+      `).join('');
     }
 
     function clearSelectedCells() {
-      document.querySelectorAll('.table-wrap td.selected-cell').forEach(cell => {
+      document.querySelectorAll('.table-wrap td.selected-cell').forEach((cell) => {
         cell.classList.remove('selected-cell');
       });
     }
 
-    function renderCircle(scaleData) {
+    function getRotationMap() {
+      return currentCircleMode === 'Chromatic' ? layerRotationChromatic : layerRotationFifths;
+    }
+
+    function getNaturalAngles() {
+      return currentCircleMode === 'Chromatic' ? naturalAnglesChromatic : naturalAnglesFifths;
+    }
+
+    function renderCircle(accidentalText = 'Natural / No accidentals') {
+      const activeMap = parseModeAccidentals(accidentalText);
+      const naturalAngles = getNaturalAngles();
+      const rotationMap = getRotationMap();
+      const selectedPCs = getSelectedPitchClasses(activeMap);
+
       circleCard.innerHTML = '';
 
-      circleLayers.forEach(layer => {
+      circleLayers.forEach((layer) => {
         const ring = document.createElement('div');
         ring.className = 'circle-ring';
         ring.style.width = `${layer.radius * 2}%`;
@@ -913,19 +981,27 @@
         circleCard.appendChild(ring);
       });
 
-      const activeMap = new Map(scaleData.map(item => [item.letter, item.offset]));
-      const order = circleOrders[currentCircleMode];
-      const angleStep = 360 / order.length;
-
-      order.forEach((letter, index) => {
-        const angle = (-90 + angleStep * index) * Math.PI / 180;
-
-        circleLayers.forEach(layer => {
+      degreeLetters.forEach((letter) => {
+        circleLayers.forEach((layer) => {
+          const angleDeg = naturalAngles[letter] + rotationMap[layer.label];
+          const angle = (angleDeg - 90) * Math.PI / 180;
           const x = 50 + layer.radius * Math.cos(angle);
           const y = 50 + layer.radius * Math.sin(angle);
+
           const node = document.createElement('div');
-          const isActive = (activeMap.get(letter) || 0) === layer.offset;
-          node.className = 'note-node' + (isActive ? ' active' : '');
+          const nodePC = pitchClass(letter, layer.offset);
+          const activeOffset = activeMap[letter] || 0;
+          const isActive = activeOffset === layer.offset;
+          const isEnharmonicGhost = !isActive && selectedPCs.has(nodePC);
+
+          let className = 'note-node';
+          if (isActive) {
+            className += ' active';
+          } else if (isEnharmonicGhost) {
+            className += ' enharmonic-ghost';
+          }
+
+          node.className = className;
           node.style.left = `${x}%`;
           node.style.top = `${y}%`;
           node.textContent = letter + layer.label;
@@ -937,43 +1013,17 @@
       tonicNode.className = 'note-node active center-tonic';
       tonicNode.style.left = '50%';
       tonicNode.style.top = '50%';
-      tonicNode.textContent = scaleData[0].noteName;
+      tonicNode.textContent = 'D';
       circleCard.appendChild(tonicNode);
-    }
-
-    function renderKeySignature(scaleData) {
-      staff.querySelectorAll('.ks-mark').forEach(el => el.remove());
-
-      const altered = scaleData.filter(item => item.offset !== 0);
-      const sharps = sharpOrder.filter(letter => altered.some(item => item.letter === letter && item.offset > 0));
-      const flats = flatOrder.filter(letter => altered.some(item => item.letter === letter && item.offset < 0));
-
-      const ordered = sharps.map(letter => altered.find(item => item.letter === letter))
-        .concat(flats.map(letter => altered.find(item => item.letter === letter)));
-
-      ordered.forEach((item, index) => {
-        const mark = document.createElement('div');
-        mark.className = 'ks-mark';
-        mark.textContent = formatAccidental(item.offset);
-        mark.style.left = `${18 + index * 16}px`;
-        mark.style.top = `${item.offset > 0 ? sharpPositions[item.letter] : flatPositions[item.letter]}px`;
-        staff.appendChild(mark);
-      });
-
-      signatureLabel.textContent = ordered.length
-        ? ordered.map(item => item.noteName).join(' ')
-        : 'Natural / No accidentals';
     }
 
     function updateDetailFromCell(row, cellIndex) {
       const familyIndex = rows.indexOf(row) + 1;
-      const sequence = row.cells[0].textContent.trim();
+      const baseSequence = row.cells[0].textContent.trim();
       const modeIndex = cellIndex;
-      const accidentalText = row.cells[cellIndex]?.textContent.trim() || '';
-      const scaleData = buildScaleData(accidentalText);
-      const detailRows = buildDetailRows(scaleData);
+      const accidentalText = row.cells[cellIndex]?.textContent.trim() || 'Natural / No accidentals';
 
-      rows.forEach(r => r.classList.remove('active'));
+      rows.forEach((r) => r.classList.remove('active'));
       row.classList.add('active');
       clearSelectedCells();
       if (row.cells[cellIndex]) row.cells[cellIndex].classList.add('selected-cell');
@@ -981,23 +1031,71 @@
       detailTitle.textContent = `Family ${String(familyIndex).padStart(2, '0')} · Mode ${String(modeIndex).padStart(2, '0')}`;
       detailSub.textContent = 'Selected mode harmonic summary';
       detailBadge.textContent = `F${String(familyIndex).padStart(2, '0')} · M${String(modeIndex).padStart(2, '0')}`;
-      metaSequence.textContent = sequence;
-      metaAccidentals.textContent = accidentalText || 'Natural / No accidentals';
-      metaCircle.textContent = currentCircleMode;
-      metaReference.textContent = 'Bass clef / D centered';
+      const name = modeNames[familyIndex-1]?.[modeIndex-1] || '';
+      modeNameEl.textContent = name;
+      metaSequence.textContent = buildIntervalSequence(accidentalText);
+      metaAccidentals.textContent = accidentalText;
 
-      renderDetailTable(detailRows);
-      renderCircle(scaleData);
-      renderKeySignature(scaleData);
+      renderCircle(accidentalText);
+      renderDetailTable(buildDetailRows(accidentalText));
       layout.classList.add('show-detail');
     }
 
-    rows.forEach(row => {
+    function runSelfTests() {
+      console.assert(rotateSequence('2-1-2-2-2-1-2', 1) === '1-2-2-2-1-2-2', 'rotateSequence helper failed');
+      console.assert(buildIntervalSequence('') === '2-1-2-2-2-1-2', 'default interval sequence failed');
+      console.assert(buildIntervalSequence('F♯') === '3-0-2-2-2-1-2', 'single accidental interval sequence failed');
+      console.assert(buildIntervalSequence('C♯ F♯') === '2-1-2-2-3-0-2', 'multiple accidentals interval sequence failed');
+
+      const parsed = parseModeAccidentals('C♯ F♯ G♯');
+      console.assert(parsed.C === 1 && parsed.F === 1 && parsed.G === 1, 'parseModeAccidentals failed');
+      console.assert(parseModeAccidentals('').D === 0, 'parseModeAccidentals natural default failed');
+
+      console.assert(pitchClass('C', 1) === pitchClass('D', -1), 'enharmonic C♯/D♭ failed');
+      console.assert(pitchClass('B', 1) === 0, 'pitchClass B♯ failed');
+
+      const selectedPCs = getSelectedPitchClasses(parseModeAccidentals('C♯'));
+      console.assert(selectedPCs.has(pitchClass('D', -1)), 'selected pitch classes should include enharmonic equivalents');
+
+      const dorianRows = buildDetailRows('');
+      console.assert(dorianRows[0][0] === 'D' && dorianRows[0][1] === 'per 1st', 'default Dorian tonic row failed');
+      console.assert(dorianRows[2][0] === 'F' && dorianRows[2][1] === 'min 3rd', 'default Dorian third row failed');
+      console.assert(dorianRows[6][0] === 'C' && dorianRows[6][1] === 'min 7th', 'default Dorian seventh row failed');
+      console.assert(dorianRows[0][2] === 'min', 'default Dorian i triad failed');
+      console.assert(dorianRows[1][2] === 'dim', 'default Dorian ii triad failed');
+      console.assert(dorianRows[2][2] === 'maj', 'default Dorian III triad failed');
+      console.assert(dorianRows[3][2] === 'maj', 'default Dorian IV triad failed');
+      console.assert(dorianRows[4][2] === 'min', 'default Dorian v triad failed');
+      console.assert(dorianRows[5][2] === 'dim', 'default Dorian vi triad failed');
+      console.assert(dorianRows[6][2] === 'maj', 'default Dorian VII triad failed');
+
+      const sharpRows = buildDetailRows('C♯ F♯');
+      console.assert(sharpRows[2][0] === 'F♯' && sharpRows[2][1] === 'per 3rd', 'F♯ interval application failed');
+      console.assert(sharpRows[6][0] === 'C♯' && sharpRows[6][1] === 'maj 7th', 'C♯ interval application failed');
+
+      const flatRows = buildDetailRows('B♭');
+      console.assert(flatRows[5][0] === 'B♭' && flatRows[5][1] === 'min 6th', 'B♭ interval application failed');
+
+      console.assert(getTriad('maj', 'per') === 'maj', 'major triad mapping failed');
+      console.assert(getTriad('min', 'per') === 'min', 'minor triad mapping failed');
+      console.assert(getTriad('min', 'dim') === 'dim', 'diminished triad mapping failed');
+      console.assert(getThirdQualityFromSemitones(3) === 'min', 'minor third semitone mapping failed');
+      console.assert(getFifthQualityFromSemitones(6) === 'dim', 'diminished fifth semitone mapping failed');
+
+      const alteredRows = buildDetailRows('F♯');
+      console.assert(alteredRows[0][2] === 'maj', 'D-F♯-A should be major');
+      console.assert(alteredRows[1][2] === 'sus2♭5', 'E-G-A♯-style triad mapping should update');
+    }
+
+    renderCircle('Natural / No accidentals');
+    runSelfTests();
+
+    rows.forEach((row) => {
       const cells = Array.from(row.querySelectorAll('td'));
 
       cells.forEach((cell, index) => {
         if (index === 0) return;
-        cell.addEventListener('click', event => {
+        cell.addEventListener('click', (event) => {
           event.stopPropagation();
           updateDetailFromCell(row, index);
         });
@@ -1010,7 +1108,7 @@
 
     closeDetailBtn.addEventListener('click', () => {
       layout.classList.remove('show-detail');
-      rows.forEach(r => r.classList.remove('active'));
+      rows.forEach((r) => r.classList.remove('active'));
       clearSelectedCells();
     });
 
@@ -1018,29 +1116,16 @@
       currentCircleMode = 'Chromatic';
       chromaticBtn.classList.add('active');
       fifthsBtn.classList.remove('active');
-      metaCircle.textContent = currentCircleMode;
-
-      const selectedCell = document.querySelector('.table-wrap td.selected-cell');
-      if (selectedCell) {
-        const selectedRow = selectedCell.parentElement;
-        updateDetailFromCell(selectedRow, Array.from(selectedRow.cells).indexOf(selectedCell));
-      }
+      renderCircle(metaAccidentals.textContent);
     });
 
     fifthsBtn.addEventListener('click', () => {
       currentCircleMode = 'Fifths';
       fifthsBtn.classList.add('active');
       chromaticBtn.classList.remove('active');
-      metaCircle.textContent = currentCircleMode;
-
-      const selectedCell = document.querySelector('.table-wrap td.selected-cell');
-      if (selectedCell) {
-        const selectedRow = selectedCell.parentElement;
-        updateDetailFromCell(selectedRow, Array.from(selectedRow.cells).indexOf(selectedCell));
-      }
+      renderCircle(metaAccidentals.textContent);
     });
 
-    // 초기 상태: 오른쪽 닫힘
     layout.classList.remove('show-detail');
   </script>
 </body>
