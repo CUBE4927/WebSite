@@ -1343,8 +1343,8 @@
     document.addEventListener('keydown', (event) => {
       const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
-      if (keys.includes(e.key)) {
-        e.preventDefault();
+      if (keys.includes(event.key)) {
+        event.preventDefault();
       }
       if (!layout.classList.contains('show-detail')) return;
     
