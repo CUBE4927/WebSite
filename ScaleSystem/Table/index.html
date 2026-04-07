@@ -467,23 +467,19 @@
     
     .mutation-button:disabled {
       cursor: not-allowed;
-      opacity: 0.28;
-      color: rgba(255,255,255,0.45);
-      background: rgba(255,255,255,0.02);
-    }
-    
-    .mutation-button.sharp:not(:disabled) {
-      color: white;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-color: transparent;
-      box-shadow: 0 8px 20px rgba(138,162,255,0.24);
-    }
-    
-    .mutation-button.flat:not(:disabled) {
+      opacity: 1;
       color: rgba(255,255,255,0.96);
       background: rgba(184,140,255,0.36);
       border-color: rgba(184,140,255,0.72);
       box-shadow: 0 0 0 1px rgba(184,140,255,0.34) inset, 0 6px 16px rgba(184,140,255,0.22);
+    }
+    
+    .mutation-button.sharp:not(:disabled),
+    .mutation-button.flat:not(:disabled) {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(138,162,255,0.24);
     }
 
     @media (max-width: 1180px) {
@@ -709,7 +705,7 @@
                 <td class="acc-cell">B♭ G♯</td>
                 <td class="acc-cell">B♭ C♯ E♭</td>
                 <td class="acc-cell">A♭ B♭ E♭ F♯</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭ G♭</td>
               </tr>
               <tr>
                 <td class="mono">1-3-1-1-3-2-1</td>
@@ -729,7 +725,7 @@
                 <td class="acc-cell">B♭ C♯ E♭ F♯</td>
                 <td class="acc-cell">A♭ E♭ F♯</td>
                 <td class="acc-cell">B♭ C♭ E♭ G♭</td>
-                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭</td>
               </tr>
               <tr>
                 <td class="mono">1-2-3-1-1-3-1</td>
@@ -1111,43 +1107,50 @@
     }
     function renderMutationButtons(accidentalText) {
       const currentSequence = buildIntervalSequence(accidentalText);
-      const labels = ['D', 'E', 'F', 'G', 'A', 'B', 'C'];
-    
+      const sharpButtons = [];
+      const flatButtons = [];
+
       mutationGrid.innerHTML = '';
-    
+
       for (let i = 0; i < 7; i++) {
         const sharpSeq = mutateSequence(currentSequence, i, +1);
         const sharpMatch = sharpSeq ? findModeBySequence(sharpSeq) : null;
-    
+
         const sharpBtn = document.createElement('button');
         sharpBtn.className = 'mutation-button sharp';
         sharpBtn.disabled = !sharpMatch;
         sharpBtn.textContent = sharpMatch
           ? `F${String(sharpMatch.familyIndex + 1).padStart(2, '0')} · M${String(sharpMatch.modeIndex + 1).padStart(2, '0')}`
-          : '';
+          : '-';
         if (sharpMatch) {
           sharpBtn.addEventListener('click', () => {
             updateDetailFromCell(rows[sharpMatch.familyIndex], sharpMatch.modeIndex + 1);
           });
         }
-    
+        sharpButtons.push(sharpBtn);
+
         const flatSeq = mutateSequence(currentSequence, i, -1);
         const flatMatch = flatSeq ? findModeBySequence(flatSeq) : null;
-    
+
         const flatBtn = document.createElement('button');
         flatBtn.className = 'mutation-button flat';
         flatBtn.disabled = !flatMatch;
         flatBtn.textContent = flatMatch
           ? `F${String(flatMatch.familyIndex + 1).padStart(2, '0')} · M${String(flatMatch.modeIndex + 1).padStart(2, '0')}`
-          : '';
+          : '-';
         if (flatMatch) {
           flatBtn.addEventListener('click', () => {
             updateDetailFromCell(rows[flatMatch.familyIndex], flatMatch.modeIndex + 1);
           });
         }
-    
-        mutationGrid.appendChild(sharpBtn);
-        mutationGrid.appendChild(flatBtn);
+        flatButtons.push(flatBtn);
+      }
+
+      // reorder from EFGABCD -> DEFGABC (rotate right by 1)
+      for (let k = 0; k < 7; k++) {
+        const i = (k + 6) % 7; // shift index
+        mutationGrid.appendChild(sharpButtons[i]);
+        mutationGrid.appendChild(flatButtons[i]);
       }
     }
     function renderDetailTable(rowsData) {
