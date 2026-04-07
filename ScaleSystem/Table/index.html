@@ -1131,10 +1131,10 @@
     
       if (event.key === 'ArrowLeft') currentModeIndex = (currentModeIndex + 5) % 7 + 1;
       if (event.key === 'ArrowRight') currentModeIndex = currentModeIndex % 7 + 1;
-      if (event.key === 'ArrowUp') currentFamliyIndex = (currentRowIndex - 1) % 16;
-      if (event.key === 'ArrowDown') currentFamliyIndex = (currentRowIndex + 1) % 16;
+      if (event.key === 'ArrowUp') currentFamliyIndex = (currentFamliyIndex - 1) % 16;
+      if (event.key === 'ArrowDown') currentFamliyIndex = (currentFamliyIndex + 1) % 16;
     
-      updateDetailFromCell(rows[currentRowIndex], currentModeIndex);
+      updateDetailFromCell(rows[currentRowIndex], currentFamliyIndex);
     });
     layout.classList.remove('show-detail');
   </script>
