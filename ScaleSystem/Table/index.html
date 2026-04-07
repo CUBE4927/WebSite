@@ -731,7 +731,8 @@
     ];
 
     let currentCircleMode = 'Chromatic';
-
+    let currentFamilyIndex = 0;
+    let currentModeIndex = 4;
     const naturalAnglesChromatic = {
       D: 0,
       E: 60,
@@ -1020,6 +1021,8 @@
       const baseSequence = row.cells[0].textContent.trim();
       const modeIndex = cellIndex;
       const accidentalText = row.cells[cellIndex]?.textContent.trim() || 'Natural / No accidentals';
+      currentFamilyIndex = rows.indexOf(row);
+      currentModeIndex = cellIndex
 
       rows.forEach((r) => r.classList.remove('active'));
       row.classList.add('active');
@@ -1123,7 +1126,16 @@
       chromaticBtn.classList.remove('active');
       renderCircle(metaAccidentals.textContent);
     });
-
+    document.addEventListener('keydown', (event) => {
+      if (!layout.classList.contains('show-detail')) return;
+    
+      if (event.key === 'ArrowLeft') currentModeIndex = (currentModeIndex + 5) % 7 + 1;
+      if (event.key === 'ArrowRight') currentModeIndex = currentModeIndex % 7 + 1;
+      if (event.key === 'ArrowUp') currentFamliyIndex = (currentRowIndex - 1) % 16;
+      if (event.key === 'ArrowDown') currentFamliyIndex = (currentRowIndex + 1) % 16;
+    
+      updateDetailFromCell(rows[currentRowIndex], currentModeIndex);
+    });
     layout.classList.remove('show-detail');
   </script>
 </body>
