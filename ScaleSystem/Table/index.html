@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cosmeo Chaos — Scale / Mode Table</title>
+  <title>Scale/Mode Table</title>
   <style>
     :root {
       --bg: #050814;
@@ -434,7 +434,7 @@
   <div class="page">
     <div class="topbar">
       <div class="topbar-left">
-        <div class="eyebrow">Cosmeo Chaos / Table</div>
+        <div class="eyebrow">for an Experiment to Cosmeo the Chaos / Table</div>
         <h1>Scale / Mode Table</h1>
       </div>
       <a class="back-link" href="../index.html">← Back to Overview</a>
@@ -444,10 +444,10 @@
       <section class="panel left-panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Scale Family Matrix</div>
-            <div class="panel-caption">16 scale families arranged by row. Each row contains the median interval sequence and its 7 modes ordered by accidental value (# − b).</div>
+            <div class="panel-title">Scale Family Sheet</div>
+            <div class="panel-caption">16개의 Scale Family를 행별로 배열함. 각 행은 중앙 Mode의 Interval Sequence와 해당 Scale의 각 Mode의 임시표 값(♯수 − ♭수)으로 정렬된 7개 Mode들을 포함함.</div>
           </div>
-          <div class="family-badge">16 Families / 112 Modes</div>
+          <div class="family-badge">16 Scales, 112 Modes</div>
         </div>
 
         <div class="table-wrap">
@@ -635,7 +635,7 @@
           <div class="panel-header compact">
             <div>
               <div class="panel-title">Included Notes</div>
-              <div class="panel-caption">Selected family / mode visualization</div>
+              <div class="panel-caption">선택된 Mode 시각화</div>
             </div>
             <button class="ghost-button" id="closeDetail" type="button">Close</button>
           </div>
@@ -656,7 +656,7 @@
           <div class="detail-head">
             <div>
               <div class="detail-title" id="detailTitle">Mode Details</div>
-              <div class="detail-sub" id="detailSub">Selected mode harmonic summary</div>
+              <div class="detail-sub" id="detailSub">선택된 Mode의 화성 요약</div>
               <div id="modeName" style="margin-top:6px; font-size:0.95rem; color:var(--accent2);"></div>
             </div>
             <div class="family-badge" id="detailBadge">Family 01 · Mode 04</div>
@@ -1030,7 +1030,7 @@
       if (row.cells[cellIndex]) row.cells[cellIndex].classList.add('selected-cell');
 
       detailTitle.textContent = `Family ${String(familyIndex).padStart(2, '0')} · Mode ${String(modeIndex).padStart(2, '0')}`;
-      detailSub.textContent = 'Selected mode harmonic summary';
+      detailSub.textContent = '선택된 Mode의 화성 요약';
       detailBadge.textContent = `F${String(familyIndex).padStart(2, '0')} · M${String(modeIndex).padStart(2, '0')}`;
       const name = modeNames[familyIndex-1]?.[modeIndex-1] || '';
       modeNameEl.textContent = name;
