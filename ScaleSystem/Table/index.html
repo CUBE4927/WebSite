@@ -1,1 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cosmeo Chaos — Scale / Mode Table</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --panel: rgba(255,255,255,0.05);
+      --line: rgba(255,255,255,0.12);
+      --text: #eef2ff;
+      --sub: #aeb7d8;
+      --accent: #8aa2ff;
+      --accent2: #b88cff;
+      --active: rgba(138,162,255,0.18);
+      --shadow: 0 14px 40px rgba(0,0,0,0.38);
+    }
 
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(136,162,255,0.12), transparent 30%),
+        radial-gradient(circle at 80% 10%, rgba(184,140,255,0.08), transparent 26%),
+        linear-gradient(180deg, var(--bg), #03050c 100%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .eyebrow {
+      color: var(--sub);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      letter-spacing: -0.03em;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--sub);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 0fr;
+      gap: 0;
+      min-height: calc(100vh - 130px);
+      transition: grid-template-columns 0.28s ease, gap 0.28s ease;
+    }
+
+    .layout.show-detail {
+      grid-template-columns: minmax(720px, 1.35fr) minmax(260px, 0.65fr);
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .left-panel {
+      padding: 20px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .right-panel {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+      transform: translateX(16px);
+      transition: opacity 0.24s ease, transform 0.28s ease;
+    }
+
+    .layout.show-detail .right-panel {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel-header.compact {
+      margin-bottom: 10px;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .panel-caption {
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    .family-badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--sub);
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+
+    .ghost-button {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--sub);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font: inherit;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+
+    .ghost-button:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.025);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    th, td {
+      padding: 10px 7px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(7, 10, 20, 0.92);
+      color: var(--sub);
+      font-size: 0.84rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    tbody tr {
+      transition: background 0.16s ease;
+      cursor: pointer;
+    }
+
+    tbody tr:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    tbody tr.active {
+      background: var(--active);
+    }
+
+    .table-wrap td.selected-cell {
+      outline: 1px solid rgba(255,255,255,0.22);
+      outline-offset: -1px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .mono {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    .acc-cell {
+      color: var(--text);
+      min-width: 0;
+      font-size: 0.83rem;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .empty-acc {
+      color: rgba(255,255,255,0.22);
+    }
+
+    .visual-panel,
+    .detail-panel {
+      padding: 14px;
+    }
+
+    .visual-top {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(150px, 180px);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .circle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .circle-card {
+      width: min(100%, 260px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: radial-gradient(circle at center, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .circle-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .note-node {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      margin: -13px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.38);
+      background: rgba(255,255,255,0.03);
+      font-size: 0.62rem;
+      line-height: 1;
+      text-align: center;
+      padding: 2px;
+      user-select: none;
+    }
+
+    .note-node.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent;
+      box-shadow: 0 0 14px rgba(163,136,255,0.45);
+    }
+
+    .note-node.center-tonic {
+      width: 34px;
+      height: 34px;
+      margin: -17px;
+      font-size: 0.82rem;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .mode-tabs button {
+      border: 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--sub);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .mode-tabs button.active {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .signature-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.035);
+      padding: 10px 10px;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .signature-title {
+      color: var(--sub);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .staff {
+      position: relative;
+      height: 110px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.015);
+      overflow: hidden;
+    }
+
+    .staff-line {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      height: 1px;
+      background: rgba(255,255,255,0.18);
+    }
+
+    .ks-mark {
+      position: absolute;
+      font-size: 1.25rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .signature-label {
+      text-align: center;
+      color: var(--sub);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .detail-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .detail-sub {
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    .detail-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .meta-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .meta-label {
+      color: var(--sub);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .detail-table th {
+      position: static;
+      background: transparent;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 8px 6px;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 1180px) {
+      .layout,
+      .layout.show-detail {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .right-panel,
+      .layout.show-detail .right-panel {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page {
+        width: min(100%, calc(100% - 20px));
+        padding-top: 18px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .visual-top {
+        grid-template-columns: 1fr;
+      }
+
+      .circle-card {
+        width: min(100%, 280px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="eyebrow">Cosmeo Chaos / Table</div>
+        <h1>Scale / Mode Table</h1>
+      </div>
+      <a class="back-link" href="../index.html">← Back to Overview</a>
+    </div>
+
+    <div class="layout" id="layout">
+      <section class="panel left-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Scale Family Matrix</div>
+            <div class="panel-caption">16 scale families arranged by row. Each row contains the median interval sequence and its 7 modes ordered by accidental value (# − b).</div>
+          </div>
+          <div class="family-badge">16 Families / 112 Modes</div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Interval Sequence</th>
+                <th>Mode 1</th>
+                <th>Mode 2</th>
+                <th>Mode 3</th>
+                <th>Mode 4</th>
+                <th>Mode 5</th>
+                <th>Mode 6</th>
+                <th>Mode 7</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">2-1-1-3-2-1-2</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">C♯ E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ F♯</td>
+                <td class="acc-cell">G♭</td>
+                <td class="acc-cell">B♭ C♭</td>
+                <td class="acc-cell">B♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-2-1-1-2-3-1</td>
+                <td class="acc-cell">A♯ B♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ F♯</td>
+                <td class="acc-cell">A♭ G♭</td>
+                <td class="acc-cell">B♭ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-1-3-2-1</td>
+                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">B♭ C♯ E♭ F♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ G♭</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-2-1-1-3-1-2</td>
+                <td class="acc-cell">A♯ B♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">B♭ C♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ F♯</td>
+                <td class="acc-cell">B♭ G♭</td>
+                <td class="acc-cell">B♭ C♭ E♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-1-3-2-1</td>
+                <td class="acc-cell">A♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ C♯ G♯</td>
+                <td class="acc-cell">C♯ E♭ G♯</td>
+                <td class="acc-cell">C♭ E♭</td>
+                <td class="acc-cell">B♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ E♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-2-1-1-2-2</td>
+                <td class="acc-cell">C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ B♭ C♯ F♯</td>
+                <td class="acc-cell">B♭ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♭</td>
+                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-2-2-2-2-2-1</td>
+                <td class="acc-cell">A♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯ E♯ G♯</td>
+                <td class="acc-cell">A♯ B♭ C♯ F♯</td>
+                <td class="acc-cell">C♯ G♯</td>
+                <td class="acc-cell">A♭ B♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-2-3-1-1-3-1</td>
+                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">B♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ E♯ G♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ F♭</td>
+                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-2-1-3-1</td>
+                <td class="acc-cell">B♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">C♯ E♯ G♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">A♭ C♭ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-2-3-1-2-1-2</td>
+                <td class="acc-cell">A♯ C♯ E♯ F𝄪 G♯</td>
+                <td class="acc-cell">A♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">C♯ G♯</td>
+                <td class="acc-cell">A♭ C♯ E♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">1-3-1-2-2-1-2</td>
+                <td class="acc-cell">A♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯ E♯ G♯</td>
+                <td class="acc-cell">C♯ E♭</td>
+                <td class="acc-cell">A♭ B♭ C♯ F♯</td>
+                <td class="acc-cell">B♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭</td>
+                <td class="acc-cell">B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-3-1-1-2</td>
+                <td class="acc-cell">B♯ C♯ F𝄪 G♯</td>
+                <td class="acc-cell">B♯ C♯ E♯ F♯</td>
+                <td class="acc-cell">A♯ E♯ G♯</td>
+                <td class="acc-cell">C♯ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ F♯</td>
+                <td class="acc-cell">A♭ B♭ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-3-1-1-2-2</td>
+                <td class="acc-cell">B♯ C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ E♯ G♯</td>
+                <td class="acc-cell">A♯ E♯ F♯</td>
+                <td class="acc-cell">B♭ C♯ E♭ F♯</td>
+                <td class="acc-cell">B♭ C♭ E♭ G♭</td>
+                <td class="acc-cell">A♭ C♯ E♭ F♭ G♭</td>
+                <td class="acc-cell">A♭ B𝄫 C♭ E♭ F♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-2-1-3-1</td>
+                <td class="acc-cell">C♯ E♯ F♯ G♯</td>
+                <td class="acc-cell">A♯ C♯ F♯</td>
+                <td class="acc-cell">G♯</td>
+                <td class="acc-cell">B♭ C♯</td>
+                <td class="acc-cell">B♭ E♭ F♯</td>
+                <td class="acc-cell">A♭ E♭</td>
+                <td class="acc-cell">A♭ B♭ C♭ E♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-2-1-2-1-2-2</td>
+                <td class="acc-cell">A♯ C♯ F♯ G♯</td>
+                <td class="acc-cell">F♯ G♯</td>
+                <td class="acc-cell">C♯</td>
+                <td class="acc-cell">B♭ F♯</td>
+                <td class="acc-cell">E♭</td>
+                <td class="acc-cell">A♭ B♭</td>
+                <td class="acc-cell">A♭ B♭ E♭ G♭</td>
+              </tr>
+              <tr>
+                <td class="mono">2-1-2-2-2-1-2</td>
+                <td class="acc-cell">C♯ F♯ G♯</td>
+                <td class="acc-cell">C♯ F♯</td>
+                <td class="acc-cell">F♯</td>
+                <td class="acc-cell empty-acc"></td>
+                <td class="acc-cell">B♭</td>
+                <td class="acc-cell">A♭ B♭</td>
+                <td class="acc-cell">A♭ B♭ E♭</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="right-panel">
+        <section class="panel visual-panel">
+          <div class="panel-header compact">
+            <div>
+              <div class="panel-title">Included Notes</div>
+              <div class="panel-caption">Selected family / mode visualization</div>
+            </div>
+            <button class="ghost-button" id="closeDetail" type="button">Close</button>
+          </div>
+
+          <div class="visual-top">
+            <div class="circle-wrap">
+              <div class="circle-card" id="circleCard" aria-label="35-node note visualization"></div>
+
+              <div class="mode-tabs" aria-label="Circle mode switch">
+                <button class="active" id="chromaticBtn" type="button">Chromatic</button>
+                <button id="fifthsBtn" type="button">Fifths</button>
+              </div>
+            </div>
+
+            <div class="signature-card">
+              <div class="signature-title">Key Signature</div>
+              <div class="staff" id="staff" aria-label="Bass clef key signature placeholder">
+                <div class="staff-line" style="top: 16px;"></div>
+                <div class="staff-line" style="top: 34px;"></div>
+                <div class="staff-line" style="top: 52px;"></div>
+                <div class="staff-line" style="top: 70px;"></div>
+                <div class="staff-line" style="top: 88px;"></div>
+              </div>
+              <div class="signature-label" id="signatureLabel">Bass clef / D centered</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel detail-panel">
+          <div class="detail-head">
+            <div>
+              <div class="detail-title" id="detailTitle">Mode Details</div>
+              <div class="detail-sub" id="detailSub">Selected mode harmonic summary</div>
+            </div>
+            <div class="family-badge" id="detailBadge">Family 01 · Mode 01</div>
+          </div>
+
+          <div class="detail-meta">
+            <div class="meta-card">
+              <div class="meta-label">Interval Sequence</div>
+              <div class="meta-value mono" id="metaSequence"></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-label">Accidentals</div>
+              <div class="meta-value" id="metaAccidentals"></div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-label">Circle View</div>
+              <div class="meta-value" id="metaCircle">Chromatic</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-label">Reference</div>
+              <div class="meta-value" id="metaReference">Bass clef / D centered</div>
+            </div>
+          </div>
+
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Note</th>
+                <th>Interval</th>
+                <th>Triad</th>
+                <th>Seventh</th>
+              </tr>
+            </thead>
+            <tbody id="detailBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const layout = document.getElementById('layout');
+    const rows = Array.from(document.querySelectorAll('.table-wrap tbody tr'));
+    const closeDetailBtn = document.getElementById('closeDetail');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailSub = document.getElementById('detailSub');
+    const detailBadge = document.getElementById('detailBadge');
+    const metaSequence = document.getElementById('metaSequence');
+    const metaAccidentals = document.getElementById('metaAccidentals');
+    const metaCircle = document.getElementById('metaCircle');
+    const metaReference = document.getElementById('metaReference');
+    const signatureLabel = document.getElementById('signatureLabel');
+    const chromaticBtn = document.getElementById('chromaticBtn');
+    const fifthsBtn = document.getElementById('fifthsBtn');
+    const detailBody = document.getElementById('detailBody');
+    const circleCard = document.getElementById('circleCard');
+    const staff = document.getElementById('staff');
+
+    const degreeLetters = ['D', 'E', 'F', 'G', 'A', 'B', 'C'];
+    const naturalSemitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const accidentalOffsets = { '♭': -1, '𝄫': -2, '♯': 1, '𝄪': 2 };
+
+    // 12시 방향 = D
+    // 현재는 7방향만 사용
+    const circleOrders = {
+      Chromatic: ['D', 'E', 'F', 'G', 'A', 'B', 'C'],
+      Fifths: ['D', 'A', 'E', 'B', 'F', 'C', 'G']
+    };
+
+    // 바깥 → 안쪽: 𝄪, ♯, ♮, ♭, 𝄫
+    const circleLayers = [
+      { offset:  2, label: '𝄪', radius: 46 },
+      { offset:  1, label: '♯', radius: 38 },
+      { offset:  0, label: '',  radius: 30 },
+      { offset: -1, label: '♭', radius: 22 },
+      { offset: -2, label: '𝄫', radius: 14 }
+    ];
+
+    const sharpOrder = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+    const flatOrder = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+    const sharpPositions = { F: 42, C: 24, G: 48, D: 30, A: 54, E: 36, B: 60 };
+    const flatPositions = { B: 36, E: 54, A: 30, D: 48, G: 24, C: 42, F: 18 };
+
+    let currentCircleMode = 'Chromatic';
+
+    function formatAccidental(offset) {
+      if (offset === 2) return '𝄪';
+      if (offset === 1) return '♯';
+      if (offset === -1) return '♭';
+      if (offset === -2) return '𝄫';
+      return '';
+    }
+
+    function parseModeAccidentals(text) {
+      const map = Object.fromEntries(degreeLetters.map(letter => [letter, 0]));
+      const trimmed = (text || '').trim();
+      if (!trimmed) return map;
+
+      trimmed.split(/\s+/).forEach(token => {
+        const match = token.match(/^([A-G])(𝄪|𝄫|♯|♭)?$/u);
+        if (!match) return;
+        map[match[1]] = accidentalOffsets[match[2] || ''] || 0;
+      });
+
+      return map;
+    }
+
+    function buildScaleData(accidentalText) {
+      const accidentalMap = parseModeAccidentals(accidentalText);
+      return degreeLetters.map(letter => {
+        const offset = accidentalMap[letter] || 0;
+        return {
+          letter,
+          offset,
+          noteName: letter + formatAccidental(offset),
+          pc: (naturalSemitones[letter] + offset + 12) % 12
+        };
+      });
+    }
+
+    function intervalLabelFromSemitones(degreeIndex, semitones) {
+      const lookup = {
+        0: { 0: 'P1', 1: 'A1' },
+        1: { 0: 'd2', 1: 'm2', 2: 'M2', 3: 'A2' },
+        2: { 2: 'd3', 3: 'm3', 4: 'M3', 5: 'A3' },
+        3: { 4: 'd4', 5: 'P4', 6: 'A4' },
+        4: { 6: 'd5', 7: 'P5', 8: 'A5' },
+        5: { 7: 'd6', 8: 'm6', 9: 'M6', 10: 'A6' },
+        6: { 9: 'd7', 10: 'm7', 11: 'M7', 0: 'A7' }
+      };
+      return lookup[degreeIndex]?.[semitones] || `${semitones} st`;
+    }
+
+    function triadQuality(intervals) {
+      const key = intervals.join(',');
+      const map = {
+        '0,4,7': 'M',
+        '0,3,7': 'm',
+        '0,3,6': 'dim',
+        '0,4,8': 'aug',
+        '0,2,7': 'sus2',
+        '0,5,7': 'sus4'
+      };
+      return map[key] || intervals.slice(1).join('/');
+    }
+
+    function seventhQuality(intervals) {
+      const key = intervals.join(',');
+      const map = {
+        '0,4,7,11': 'M7',
+        '0,4,7,10': '7',
+        '0,3,7,10': 'm7',
+        '0,3,7,11': 'mM7',
+        '0,3,6,10': 'm7♭5',
+        '0,3,6,9': 'dim7',
+        '0,4,8,11': 'augM7',
+        '0,4,8,10': 'aug7'
+      };
+      return map[key] || intervals.slice(1).join('/');
+    }
+
+    function buildDetailRows(scaleData) {
+      return scaleData.map((note, index) => {
+        const rootPc = scaleData[index].pc;
+        const thirdPc = scaleData[(index + 2) % 7].pc;
+        const fifthPc = scaleData[(index + 4) % 7].pc;
+        const seventhPc = scaleData[(index + 6) % 7].pc;
+        const triadIntervals = [0, (thirdPc - rootPc + 12) % 12, (fifthPc - rootPc + 12) % 12];
+        const seventhIntervals = [0, (thirdPc - rootPc + 12) % 12, (fifthPc - rootPc + 12) % 12, (seventhPc - rootPc + 12) % 12];
+        const relativeToTonic = (note.pc - scaleData[0].pc + 12) % 12;
+        return [
+          note.noteName,
+          intervalLabelFromSemitones(index, relativeToTonic),
+          triadQuality(triadIntervals),
+          seventhQuality(seventhIntervals)
+        ];
+      });
+    }
+
+    function renderDetailTable(rowsData) {
+      detailBody.innerHTML = rowsData.map(row =>
+        '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td><td>' + row[3] + '</td></tr>'
+      ).join('');
+    }
+
+    function clearSelectedCells() {
+      document.querySelectorAll('.table-wrap td.selected-cell').forEach(cell => {
+        cell.classList.remove('selected-cell');
+      });
+    }
+
+    function renderCircle(scaleData) {
+      circleCard.innerHTML = '';
+
+      circleLayers.forEach(layer => {
+        const ring = document.createElement('div');
+        ring.className = 'circle-ring';
+        ring.style.width = `${layer.radius * 2}%`;
+        ring.style.height = `${layer.radius * 2}%`;
+        circleCard.appendChild(ring);
+      });
+
+      const activeMap = new Map(scaleData.map(item => [item.letter, item.offset]));
+      const order = circleOrders[currentCircleMode];
+      const angleStep = 360 / order.length;
+
+      order.forEach((letter, index) => {
+        const angle = (-90 + angleStep * index) * Math.PI / 180;
+
+        circleLayers.forEach(layer => {
+          const x = 50 + layer.radius * Math.cos(angle);
+          const y = 50 + layer.radius * Math.sin(angle);
+          const node = document.createElement('div');
+          const isActive = (activeMap.get(letter) || 0) === layer.offset;
+          node.className = 'note-node' + (isActive ? ' active' : '');
+          node.style.left = `${x}%`;
+          node.style.top = `${y}%`;
+          node.textContent = letter + layer.label;
+          circleCard.appendChild(node);
+        });
+      });
+
+      const tonicNode = document.createElement('div');
+      tonicNode.className = 'note-node active center-tonic';
+      tonicNode.style.left = '50%';
+      tonicNode.style.top = '50%';
+      tonicNode.textContent = scaleData[0].noteName;
+      circleCard.appendChild(tonicNode);
+    }
+
+    function renderKeySignature(scaleData) {
+      staff.querySelectorAll('.ks-mark').forEach(el => el.remove());
+
+      const altered = scaleData.filter(item => item.offset !== 0);
+      const sharps = sharpOrder.filter(letter => altered.some(item => item.letter === letter && item.offset > 0));
+      const flats = flatOrder.filter(letter => altered.some(item => item.letter === letter && item.offset < 0));
+
+      const ordered = sharps.map(letter => altered.find(item => item.letter === letter))
+        .concat(flats.map(letter => altered.find(item => item.letter === letter)));
+
+      ordered.forEach((item, index) => {
+        const mark = document.createElement('div');
+        mark.className = 'ks-mark';
+        mark.textContent = formatAccidental(item.offset);
+        mark.style.left = `${18 + index * 16}px`;
+        mark.style.top = `${item.offset > 0 ? sharpPositions[item.letter] : flatPositions[item.letter]}px`;
+        staff.appendChild(mark);
+      });
+
+      signatureLabel.textContent = ordered.length
+        ? ordered.map(item => item.noteName).join(' ')
+        : 'Natural / No accidentals';
+    }
+
+    function updateDetailFromCell(row, cellIndex) {
+      const familyIndex = rows.indexOf(row) + 1;
+      const sequence = row.cells[0].textContent.trim();
+      const modeIndex = cellIndex;
+      const accidentalText = row.cells[cellIndex]?.textContent.trim() || '';
+      const scaleData = buildScaleData(accidentalText);
+      const detailRows = buildDetailRows(scaleData);
+
+      rows.forEach(r => r.classList.remove('active'));
+      row.classList.add('active');
+      clearSelectedCells();
+      if (row.cells[cellIndex]) row.cells[cellIndex].classList.add('selected-cell');
+
+      detailTitle.textContent = `Family ${String(familyIndex).padStart(2, '0')} · Mode ${String(modeIndex).padStart(2, '0')}`;
+      detailSub.textContent = 'Selected mode harmonic summary';
+      detailBadge.textContent = `F${String(familyIndex).padStart(2, '0')} · M${String(modeIndex).padStart(2, '0')}`;
+      metaSequence.textContent = sequence;
+      metaAccidentals.textContent = accidentalText || 'Natural / No accidentals';
+      metaCircle.textContent = currentCircleMode;
+      metaReference.textContent = 'Bass clef / D centered';
+
+      renderDetailTable(detailRows);
+      renderCircle(scaleData);
+      renderKeySignature(scaleData);
+      layout.classList.add('show-detail');
+    }
+
+    rows.forEach(row => {
+      const cells = Array.from(row.querySelectorAll('td'));
+
+      cells.forEach((cell, index) => {
+        if (index === 0) return;
+        cell.addEventListener('click', event => {
+          event.stopPropagation();
+          updateDetailFromCell(row, index);
+        });
+      });
+
+      row.addEventListener('click', () => {
+        updateDetailFromCell(row, 1);
+      });
+    });
+
+    closeDetailBtn.addEventListener('click', () => {
+      layout.classList.remove('show-detail');
+      rows.forEach(r => r.classList.remove('active'));
+      clearSelectedCells();
+    });
+
+    chromaticBtn.addEventListener('click', () => {
+      currentCircleMode = 'Chromatic';
+      chromaticBtn.classList.add('active');
+      fifthsBtn.classList.remove('active');
+      metaCircle.textContent = currentCircleMode;
+
+      const selectedCell = document.querySelector('.table-wrap td.selected-cell');
+      if (selectedCell) {
+        const selectedRow = selectedCell.parentElement;
+        updateDetailFromCell(selectedRow, Array.from(selectedRow.cells).indexOf(selectedCell));
+      }
+    });
+
+    fifthsBtn.addEventListener('click', () => {
+      currentCircleMode = 'Fifths';
+      fifthsBtn.classList.add('active');
+      chromaticBtn.classList.remove('active');
+      metaCircle.textContent = currentCircleMode;
+
+      const selectedCell = document.querySelector('.table-wrap td.selected-cell');
+      if (selectedCell) {
+        const selectedRow = selectedCell.parentElement;
+        updateDetailFromCell(selectedRow, Array.from(selectedRow.cells).indexOf(selectedCell));
+      }
+    });
+
+    // 초기 상태: 오른쪽 닫힘
+    layout.classList.remove('show-detail');
+  </script>
+</body>
+</html>
