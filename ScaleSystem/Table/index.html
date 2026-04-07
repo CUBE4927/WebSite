@@ -1131,7 +1131,7 @@
     
       if (event.key === 'ArrowLeft') currentModeIndex = (currentModeIndex + 5) % 7 + 1;
       if (event.key === 'ArrowRight') currentModeIndex = currentModeIndex % 7 + 1;
-      if (event.key === 'ArrowUp') currentFamilyIndex = (currentFamilyIndex - 1) % 16;
+      if (event.key === 'ArrowUp') currentFamilyIndex = (currentFamilyIndex + 15) % 16;
       if (event.key === 'ArrowDown') currentFamilyIndex = (currentFamilyIndex + 1) % 16;
     
       updateDetailFromCell(rows[currentFamilyIndex], currentModeIndex);
