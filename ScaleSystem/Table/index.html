@@ -385,8 +385,10 @@
     .detail-table {
       width: 100%;
       min-width: 0;
+      table-layout: fixed;
+      height: 100%;
     }
-
+    
     .detail-table th {
       position: static;
       background: transparent;
@@ -402,24 +404,27 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-      align-items: start;
+      align-items: stretch;
     }
     
-    .detail-table-wrap {
+    .detail-table-wrap,
+    .mutation-panel {
       min-width: 0;
     }
     
     .mutation-panel {
-      min-width: 0;
-      padding-top: 4px;
+      display: grid;
+      grid-template-rows: auto 1fr;
     }
     
     .mutation-head {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 0;
       padding: 0 6px;
+      min-height: 46px; /* 테이블 thead 높이 비슷하게 */
+      align-items: center;
     }
     
     .mutation-col-title {
@@ -433,19 +438,27 @@
     .mutation-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      grid-template-rows: repeat(7, 1fr);
+      gap: 0 14px;
+      height: 100%;
     }
     
     .mutation-button {
-      min-height: 42px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.04);
-      color: var(--sub);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.42);
       font: inherit;
       font-size: 0.88rem;
-      padding: 10px 12px;
+      padding: 0 12px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
     }
     
     .mutation-button:disabled {
