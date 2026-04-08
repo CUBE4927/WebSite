@@ -98,7 +98,7 @@ function playCurrentMode(relativePitches) {
     { note: 17, start: 15, dur: 1 }
   ];
 
-  playNoteEvents(events, relativePitches, 0.4);
+  playNoteEvents(events, relativePitches, 0.125);
 }
 
 window.playCurrentMode = playCurrentMode;
