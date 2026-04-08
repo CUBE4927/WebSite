@@ -8,7 +8,7 @@ function ensureAudioContext() {
   return audioContext;
 }
 
-function stopPlayback() {
+window.function stopPlayback() {
   activeOscillators.forEach(({ osc, gain }) => {
     try {
       gain.gain.cancelScheduledValues(audioContext.currentTime);
@@ -20,7 +20,7 @@ function stopPlayback() {
   activeOscillators = [];
 }
 
-function playCurrentMode(accidentalText) {
+window.function playCurrentMode(accidentalText) {
   const ctx = ensureAudioContext();
   stopPlayback();
 
