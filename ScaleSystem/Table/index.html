@@ -1394,10 +1394,12 @@
       const row = rows[currentFamilyIndex];
       if (!row) return;
     
-      const accidentalText = row.cells[currentModeIndex]?.textContent.trim() || 'Natural / No accidentals';
+      
     
       isPlaying = true;
-      playCurrentMode(accidentalText);
+      const intervalSequence = metaInterval.textContent.trim();
+
+      playCurrentMode(intervalSequence);
     });
     
     stopBtn.addEventListener('click', () => {
