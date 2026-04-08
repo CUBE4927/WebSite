@@ -420,6 +420,7 @@
       display: grid;
       grid-template-rows: 44px 1fr;
       height: 100%;
+      align-content: stretch;
     }
     
     .mutation-head {
@@ -480,6 +481,22 @@
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       border-color: transparent;
       box-shadow: 0 8px 20px rgba(138,162,255,0.24);
+    }
+    .mutation-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: center;
+      padding-top: 10px;
+    }
+    
+    .mutation-bottom-row .mutation-button {
+      height: 42px;
+      min-height: 42px;
+      align-self: center;
+      justify-self: stretch;
+      font-size: 1rem;
+      font-weight: 600;
     }
 
     @media (max-width: 1180px) {
@@ -811,6 +828,10 @@
                 <div class="mutation-col-title">♭</div>
               </div>
               <div class="mutation-grid" id="mutationGrid"></div>
+              <div class="mutation-bottom-row">
+                <button class="mutation-button sharp" id="playBtn" type="button">▶</button>
+                <button class="mutation-button flat" id="stopBtn" type="button">■</button>
+              </div>
             </div>
           </div>
         </section>
@@ -833,6 +854,8 @@
     const circleCard = document.getElementById('circleCard');
     const modeNameEl = document.getElementById('modeName');
     const mutationGrid = document.getElementById('mutationGrid');
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
 
     const modeNames = [
 ['Lydian','Ionian','Mixolydian','Dorian','Aeolian','Phrygian','Locrian'],
@@ -856,6 +879,8 @@
     let currentCircleMode = 'Chromatic';
     let currentFamilyIndex = 0;
     let currentModeIndex = 4;
+    let isPlaying = false;
+    
     const naturalAnglesChromatic = {
       D: 0,
       E: 60,
@@ -1254,6 +1279,11 @@
       renderDetailTable(buildDetailRows(accidentalText));
       renderMutationButtons(accidentalText);
       layout.classList.add('show-detail');
+
+      if (isPlaying) {
+        stopPlayback();
+        isPlaying = false;
+      }
     }
 
     function runSelfTests() {
@@ -1340,6 +1370,22 @@
       chromaticBtn.classList.remove('active');
       renderCircle(metaAccidentals.textContent);
     });
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) return;
+    
+      const row = rows[currentFamilyIndex];
+      if (!row) return;
+    
+      const accidentalText = row.cells[currentModeIndex]?.textContent.trim() || 'Natural / No accidentals';
+    
+      isPlaying = true;
+      playCurrentMode(accidentalText);
+    });
+    
+    stopBtn.addEventListener('click', () => {
+      stopPlayback();
+      isPlaying = false;
+    });
     document.addEventListener('keydown', (event) => {
       const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
@@ -1357,5 +1403,6 @@
     });
     layout.classList.remove('show-detail');
   </script>
+  <script src="playback.js"></script>
 </body>
 </html>
