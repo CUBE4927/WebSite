@@ -20,30 +20,28 @@ function stopPlayback() {
   activeOscillators = [];
 }
 
-function playCurrentMode(accidentalText) {
+function playCurrentMode(intervalSequence) {
   const ctx = ensureAudioContext();
   stopPlayback();
 
-  console.log('PLAY:', accidentalText);
-
+  console.log('PLAY:', intervalSequence);
+  const intervals = intervalSequence.split('-').map(Number);
   // 임시 테스트용 단일음
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
+  // const osc = ctx.createOscillator();
+  // const gain = ctx.createGain();
 
-  osc.type = 'sine';
-  osc.frequency.value = 440;
+  // osc.type = 'sine';
+  // osc.frequency.value = 440;
 
-  gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.02);
-  gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+  // gain.gain.value = 0.02;
 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+  // osc.connect(gain);
+  // gain.connect(ctx.destination);
 
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.85);
+  // osc.start(ctx.currentTime);
+  // osc.stop(ctx.currentTime + 0.85);
 
-  activeOscillators.push({ osc, gain });
+  // activeOscillators.push({ osc, gain });
 }
 
 window.playCurrentMode = playCurrentMode;
