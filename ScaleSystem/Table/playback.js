@@ -35,7 +35,7 @@ function noteValueToFrequency(noteValue, relativePitches) {
   return 440 * Math.pow(2, relative / 12);
 }
 
-function playNoteEvents(events, relativePitches, secondsPerBeat = 0.25) {
+function playNoteEvents(events, relativePitches, secondsPerBeat = 0.125) {
   const ctx = ensureAudioContext();
   stopPlayback();
 
