@@ -1397,7 +1397,9 @@
       
     
       isPlaying = true;
-      playCurrentMode(dorianBaseRelativePitches);
+      const accidentalText = metaAccidentals.textContent.trim();
+      const relativePitches = buildAppliedPitches(accidentalText);
+      playCurrentMode(relativePitches);
     });
     
     stopBtn.addEventListener('click', () => {
