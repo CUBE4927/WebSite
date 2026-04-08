@@ -392,6 +392,7 @@
       grid-template-rows: 44px 1fr;
     }
     
+    
     .detail-table th {
       position: static;
       background: transparent;
@@ -411,14 +412,29 @@
       align-items: stretch;
     }
     
-    .detail-table-wrap,
-    .mutation-panel {
+    .detail-table-wrap {
       min-width: 0;
+      display: grid;
+      grid-template-rows: 1fr 56px;
+      height: 100%;
     }
     
+    .table-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      padding-top: 10px;
+    }
+    
+    .table-bottom-row .mutation-button {
+      height: 42px;
+      min-height: 42px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
     .mutation-panel {
       display: grid;
-      grid-template-rows: 44px 1fr;
+      grid-template-rows: 44px 1fr 56px;
       height: 100%;
       align-content: stretch;
     }
@@ -484,8 +500,7 @@
     }
     .mutation-bottom-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      grid-template-columns: 1fr;
       align-items: center;
       padding-top: 10px;
     }
@@ -822,6 +837,9 @@
                   <tr><td>C</td><td>min 7th</td><td>maj</td></tr>
                 </tbody>
               </table>
+              <div class="table-bottom-row">
+                <button class="mutation-button sharp" id="playBtn" type="button">▶</button>
+              </div>
             </div>
             <div class="mutation-panel">
               <div class="mutation-head">
@@ -830,7 +848,6 @@
               </div>
               <div class="mutation-grid" id="mutationGrid"></div>
               <div class="mutation-bottom-row">
-                <button class="mutation-button sharp" id="playBtn" type="button">▶</button>
                 <button class="mutation-button flat" id="stopBtn" type="button">■</button>
               </div>
             </div>
