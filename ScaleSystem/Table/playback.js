@@ -20,11 +20,11 @@ function stopPlayback() {
   activeOscillators = [];
 }
 
-function playCurrentMode(dorianBaseRelativePitches) {
+function playCurrentMode(relativePitches) {
   const ctx = ensureAudioContext();
   stopPlayback();
 
-  console.log('PLAY:', dorianBaseRelativePitches);
+  console.log('PLAY:', relativePitches);
   //const intervals = intervalSequence.split('-').map(Number);
   // 임시 테스트용 단일음
   // const osc = ctx.createOscillator();
