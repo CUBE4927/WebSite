@@ -1397,9 +1397,7 @@
       
     
       isPlaying = true;
-      const intervalSequence = metaInterval.textContent.trim();
-
-      playCurrentMode(intervalSequence);
+      playCurrentMode(dorianBaseRelativePitches);
     });
     
     stopBtn.addEventListener('click', () => {
