@@ -1,0 +1,23 @@
+body {
+  background: #111;
+  color: white;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+#board {
+  background: #000;
+  border: 1px solid #555;
+}
+
+.curve-f {
+  stroke: #4da6ff; /* 파란 곡선 */
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.curve-g {
+  stroke: #66ff99; /* 초록 곡선 */
+  fill: none;
+  stroke-width: 1.5;
+}
