@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소인수분해 문제 사이트</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: sans-serif;
+      background: #f4f4f4;
+      color: #111;
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      font-size: 28px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .top-bar label {
+      font-weight: bold;
+    }
+
+    .top-bar input[type="number"] {
+      width: 90px;
+      padding: 8px 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 9px 14px;
+      font-size: 15px;
+      cursor: pointer;
+      border: 1px solid #888;
+      background: white;
+      border-radius: 8px;
+    }
+
+    button:hover {
+      background: #f0f0f0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: white;
+      border: 2px solid #222;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+    }
+
+    .problem-number {
+      margin-bottom: 18px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    #divisionArea {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .division-block {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .division-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .divisor-input,
+    .quotient-input {
+      width: 90px;
+      padding: 8px;
+      font-size: 20px;
+      text-align: center;
+      border: 1px solid #999;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .number-stack {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .left-number {
+      min-width: 140px;
+      padding: 8px 12px 8px 4px;
+      text-align: right;
+      font-size: 28px;
+      line-height: 1.2;
+      border-top: 2px solid #222;
+      border-right: 2px solid #222;
+    }
+
+    .right-blank {
+      width: 44px;
+      border-top: 2px solid #222;
+    }
+
+    .division-bottom {
+      padding-left: 100px;
+    }
+
+    .child-container {
+      margin-top: 4px;
+    }
+
+    #answerInput {
+      width: 100%;
+      min-height: 300px;
+      resize: vertical;
+      padding: 12px;
+      font-size: 18px;
+      line-height: 1.5;
+      font-family: monospace;
+      border: 1px solid #999;
+      border-radius: 8px;
+    }
+
+    .help-text {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+      white-space: pre-line;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    #result {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      white-space: pre-line;
+      min-height: 52px;
+    }
+
+    .result-ok {
+      background: #eaf8ec !important;
+      border-color: #8fd19e !important;
+      color: #14532d;
+    }
+
+    .result-bad {
+      background: #fff1f1 !important;
+      border-color: #e59a9a !important;
+      color: #7f1d1d;
+    }
+
+    .result-neutral {
+      background: #f7f7f7 !important;
+      border-color: #ccc !important;
+      color: #222;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>소인수분해 연습</h1>
+
+  <div class="top-bar">
+    <label for="difficultyInput">난이도(자릿수)</label>
+    <input id="difficultyInput" type="number" min="1" max="12" value="4" />
+    <button id="generateBtn">랜덤 문제 생성</button>
+  </div>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>직접 나눗셈</h2>
+      <div class="problem-number">문제: <span id="problemNumber"></span></div>
+      <div id="divisionArea"></div>
+    </section>
+
+    <section class="panel">
+      <h2>정답 입력</h2>
+      <textarea id="answerInput" spellcheck="false" placeholder="예:
+2 1
+20881 1"></textarea>
+
+      <div class="help-text">입력 형식:
+(소인수)(공백)(지수)
+(소인수)(공백)(지수)
+...
+빈 줄은 무시됩니다.</div>
+
+      <div class="button-row">
+        <button id="checkBtn">정답 확인</button>
+        <button id="clearBtn">입력 지우기</button>
+      </div>
+
+      <div id="result" class="result-neutral">문제를 생성한 뒤 정답을 입력하세요.</div>
+    </section>
+  </div>
+
+  <script>
+    const difficultyInput = document.getElementById("difficultyInput");
+    const generateBtn = document.getElementById("generateBtn");
+    const problemNumberEl = document.getElementById("problemNumber");
+    const divisionArea = document.getElementById("divisionArea");
+    const answerInput = document.getElementById("answerInput");
+    const checkBtn = document.getElementById("checkBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const resultEl = document.getElementById("result");
+
+    let currentNumber = 41762;
+
+    function factor(n) {
+      const factors = {};
+
+      if (n <= 1) {
+        return factors;
+      }
+
+      let i = 2;
+      while (i * i <= n) {
+        while (n % i === 0) {
+          factors[i] = (factors[i] || 0) + 1;
+          n = Math.floor(n / i);
+        }
+        i += 1;
+      }
+
+      if (n > 1) {
+        factors[n] = (factors[n] || 0) + 1;
+      }
+
+      return factors;
+    }
+
+    function generateRandomNumber(digits) {
+      const min = Math.pow(10, digits - 1);
+      const max = Math.pow(10, digits) - 1;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function setResult(message, type) {
+      resultEl.textContent = message;
+      resultEl.className = "";
+      if (type === "ok") resultEl.classList.add("result-ok");
+      else if (type === "bad") resultEl.classList.add("result-bad");
+      else resultEl.classList.add("result-neutral");
+    }
+
+    function createDivisionBlock(leftNumber) {
+      const block = document.createElement("div");
+      block.className = "division-block";
+
+      const top = document.createElement("div");
+      top.className = "division-top";
+
+      const divisorInput = document.createElement("input");
+      divisorInput.type = "text";
+      divisorInput.className = "divisor-input";
+      divisorInput.placeholder = "÷수";
+
+      const numberStack = document.createElement("div");
+      numberStack.className = "number-stack";
+
+      const leftNumberEl = document.createElement("div");
+      leftNumberEl.className = "left-number";
+      leftNumberEl.textContent = leftNumber;
+
+      const rightBlank = document.createElement("div");
+      rightBlank.className = "right-blank";
+
+      numberStack.appendChild(leftNumberEl);
+      numberStack.appendChild(rightBlank);
+
+      top.appendChild(divisorInput);
+      top.appendChild(numberStack);
+
+      const bottom = document.createElement("div");
+      bottom.className = "division-bottom";
+
+      const quotientInput = document.createElement("input");
+      quotientInput.type = "text";
+      quotientInput.className = "quotient-input";
+      quotientInput.placeholder = "몫";
+
+      bottom.appendChild(quotientInput);
+
+      const childContainer = document.createElement("div");
+      childContainer.className = "child-container";
+
+      block.appendChild(top);
+      block.appendChild(bottom);
+      block.appendChild(childContainer);
+
+      let childBlock = null;
+
+      quotientInput.addEventListener("input", () => {
+        const value = quotientInput.value.trim();
+
+        if (/^[1-9]\d*$/.test(value)) {
+          const nextNumber = Number(value);
+
+          if (!childBlock) {
+            childBlock = createDivisionBlock(nextNumber);
+            childContainer.appendChild(childBlock);
+          } else {
+            const nextLeft = childBlock.querySelector(".left-number");
+            nextLeft.textContent = nextNumber;
+          }
+        } else {
+          childContainer.innerHTML = "";
+          childBlock = null;
+        }
+      });
+
+      return block;
+    }
+
+    function rebuildDivisionArea(number) {
+      divisionArea.innerHTML = "";
+      divisionArea.appendChild(createDivisionBlock(number));
+    }
+
+    function parseUserAnswer(text) {
+      const lines = text
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line !== "");
+
+      if (lines.length === 0) {
+        return {
+          ok: false,
+          message: "답을 입력해 주세요."
+        };
+      }
+
+      const result = {};
+
+      for (let idx = 0; idx < lines.length; idx++) {
+        const line = lines[idx];
+        const parts = line.split(/\s+/);
+
+        if (parts.length !== 2) {
+          return {
+            ok: false,
+            message: `${idx + 1}번째 줄 형식이 잘못되었습니다. "소인수 공백 지수" 형태로 입력해 주세요.`
+          };
+        }
+
+        const [primeStr, expStr] = parts;
+
+        if (!/^[1-9]\d*$/.test(primeStr) || !/^[1-9]\d*$/.test(expStr)) {
+          return {
+            ok: false,
+            message: `${idx + 1}번째 줄에는 양의 정수만 입력할 수 있습니다.`
+          };
+        }
+
+        if (result[primeStr] !== undefined) {
+          return {
+            ok: false,
+            message: `${idx + 1}번째 줄에서 소인수 ${primeStr}가 중복되었습니다.`
+          };
+        }
+
+        result[primeStr] = Number(expStr);
+      }
+
+      return {
+        ok: true,
+        factors: result
+      };
+    }
+
+    function factorsEqual(a, b) {
+      const aKeys = Object.keys(a).sort((x, y) => Number(x) - Number(y));
+      const bKeys = Object.keys(b).sort((x, y) => Number(x) - Number(y));
+
+      if (aKeys.length !== bKeys.length) return false;
+
+      for (let i = 0; i < aKeys.length; i++) {
+        if (aKeys[i] !== bKeys[i]) return false;
+        if (a[aKeys[i]] !== b[bKeys[i]]) return false;
+      }
+
+      return true;
+    }
+
+    function loadProblem(number) {
+      currentNumber = number;
+      problemNumberEl.textContent = number;
+      rebuildDivisionArea(number);
+      answerInput.value = "";
+      setResult(`새 문제 ${number}가 생성되었습니다.`, "neutral");
+    }
+
+    generateBtn.addEventListener("click", () => {
+      const digits = Number(difficultyInput.value);
+
+      if (!Number.isInteger(digits) || digits < 1) {
+        setResult("난이도는 1 이상의 정수여야 합니다.", "bad");
+        return;
+      }
+
+      const number = generateRandomNumber(digits);
+      loadProblem(number);
+    });
+
+    checkBtn.addEventListener("click", () => {
+      const parsed = parseUserAnswer(answerInput.value);
+
+      if (!parsed.ok) {
+        setResult(parsed.message, "bad");
+        return;
+      }
+
+      const correct = factor(currentNumber);
+
+      if (factorsEqual(parsed.factors, correct)) {
+        setResult("정답입니다!", "ok");
+      } else {
+        setResult("오답입니다.", "bad");
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      answerInput.value = "";
+      setResult("입력을 지웠습니다.", "neutral");
+    });
+
+    loadProblem(currentNumber);
+  </script>
+</body>
+</html>
