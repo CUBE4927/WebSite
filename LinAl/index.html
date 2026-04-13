@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>선형대수 연습 사이트</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --line: #d0d7de;
+      --accent: #2563eb;
+      --accent-2: #1d4ed8;
+      --good: #15803d;
+      --bad: #b91c1c;
+      --warn: #92400e;
+      --soft: #eef2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+    }
+
+    p { margin: 0; }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff, #eef4ff);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .hero p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .sidebar,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 18px;
+      padding: 16px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .menu-section + .menu-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e9edf2;
+    }
+
+    .menu-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .menu-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: 0.15s ease;
+      font-size: 14px;
+    }
+
+    .menu-btn:hover {
+      border-color: var(--accent);
+      background: #f8fbff;
+    }
+
+    .menu-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0 18px;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button.action,
+    select,
+    input[type="text"],
+    input[type="number"] {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    button.action {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transition: 0.15s ease;
+    }
+
+    button.action:hover {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+
+    button.subtle {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    button.subtle:hover {
+      background: #f8fafc;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .box {
+      border: 1px solid #e6e9ee;
+      border-radius: 14px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .box.soft {
+      background: #fbfcff;
+    }
+
+    .matrix-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .matrix {
+      display: grid;
+      gap: 8px;
+      border-left: 3px solid #334155;
+      border-right: 3px solid #334155;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    .matrix.size-2x2 { grid-template-columns: repeat(2, 90px); }
+    .matrix.size-2x3 { grid-template-columns: repeat(3, 90px); }
+    .matrix.size-3x2 { grid-template-columns: repeat(2, 90px); }
+    .matrix.size-3x3 { grid-template-columns: repeat(3, 90px); }
+    .matrix.size-2x1 { grid-template-columns: repeat(1, 90px); }
+    .matrix.size-3x1 { grid-template-columns: repeat(1, 90px); }
+
+    .matrix input {
+      width: 90px;
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .vector {
+      display: grid;
+      gap: 8px;
+      border-left: 3px solid #334155;
+      border-right: 3px solid #334155;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    .vector.size-2 { grid-template-columns: repeat(1, 90px); }
+    .vector.size-3 { grid-template-columns: repeat(1, 90px); }
+
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+
+    .status.good {
+      background: #f0fdf4;
+      color: var(--good);
+      border-color: #bbf7d0;
+    }
+
+    .status.bad {
+      background: #fef2f2;
+      color: var(--bad);
+      border-color: #fecaca;
+    }
+
+    .status.info {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .answer-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .answer-grid.cols-2 { grid-template-columns: repeat(2, 90px); }
+    .answer-grid.cols-3 { grid-template-columns: repeat(3, 90px); }
+
+    .answer-grid input {
+      width: 90px;
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .formula {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      padding: 12px 14px;
+      border-radius: 10px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .score {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <h1>선형대수 연습 사이트</h1>
+      <p>
+        벡터의 내적, 외적, 텐서곱과 행렬의 곱셈, 역행렬, 행렬식, 2×2 고윳값, 고유벡터를 연습할 수 있는 단일 HTML 페이지다.
+        모든 입력은 정수 또는 분수 형태로 넣을 수 있다. 예: <b>3</b>, <b>-2</b>, <b>5/4</b>, <b>-7/3</b>
+      </p>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="menu-section">
+          <div class="menu-title">벡터</div>
+          <div class="menu-list">
+            <button class="menu-btn active" data-mode="dot">내적</button>
+            <button class="menu-btn" data-mode="cross">외적</button>
+            <button class="menu-btn" data-mode="tensor">텐서곱</button>
+          </div>
+        </div>
+        <div class="menu-section">
+          <div class="menu-title">행렬</div>
+          <div class="menu-list">
+            <button class="menu-btn" data-mode="matmul">행렬 곱셈</button>
+            <button class="menu-btn" data-mode="inverse">역행렬</button>
+            <button class="menu-btn" data-mode="det">행렬식</button>
+            <button class="menu-btn" data-mode="eigenvalue">2×2 고윳값</button>
+            <button class="menu-btn" data-mode="eigenvector">2×2 고유벡터</button>
+          </div>
+        </div>
+        <div class="menu-section">
+          <div class="menu-title">기록</div>
+          <div class="score">
+            <div class="pill">정답 <span id="correctCount">0</span></div>
+            <div class="pill">오답 <span id="wrongCount">0</span></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <div class="row">
+          <h2 id="modeTitle">내적</h2>
+        </div>
+        <p id="modeDescription" class="muted"></p>
+
+        <div class="controls">
+          <label>
+            난이도
+            <select id="difficultySelect">
+              <option value="easy">쉬움</option>
+              <option value="normal" selected>보통</option>
+              <option value="hard">어려움</option>
+            </select>
+          </label>
+          <button class="action" id="newProblemBtn">새 문제</button>
+          <button class="action subtle" id="showAnswerBtn">정답 보기</button>
+          <button class="action subtle" id="clearInputBtn">입력 지우기</button>
+        </div>
+
+        <div id="problemArea"></div>
+        <div id="answerArea"></div>
+        <div id="feedbackArea"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    class Frac {
+      constructor(num, den = 1) {
+        if (!Number.isInteger(num) || !Number.isInteger(den)) {
+          throw new Error("정수 또는 분수만 허용됩니다.");
+        }
+        if (den === 0) throw new Error("분모는 0일 수 없습니다.");
+        if (num === 0) {
+          this.num = 0;
+          this.den = 1;
+          return;
+        }
+        if (den < 0) {
+          num = -num;
+          den = -den;
+        }
+        const g = Frac.gcd(Math.abs(num), Math.abs(den));
+        this.num = num / g;
+        this.den = den / g;
+      }
+
+      static gcd(a, b) {
+        while (b !== 0) {
+          const t = b;
+          b = a % b;
+          a = t;
+        }
+        return a;
+      }
+
+      static fromInt(n) {
+        return new Frac(n, 1);
+      }
+
+      static parse(str) {
+        const s = String(str).trim();
+        if (s === "") throw new Error("빈 입력입니다.");
+        if (s.includes("/")) {
+          const parts = s.split("/");
+          if (parts.length !== 2) throw new Error("잘못된 분수 입력입니다.");
+          const a = Number(parts[0].trim());
+          const b = Number(parts[1].trim());
+          if (!Number.isInteger(a) || !Number.isInteger(b)) throw new Error("정수 또는 분수만 허용됩니다.");
+          return new Frac(a, b);
+        }
+        const n = Number(s);
+        if (!Number.isInteger(n)) throw new Error("정수 또는 분수만 허용됩니다.");
+        return new Frac(n, 1);
+      }
+
+      add(o) { return new Frac(this.num * o.den + o.num * this.den, this.den * o.den); }
+      sub(o) { return new Frac(this.num * o.den - o.num * this.den, this.den * o.den); }
+      mul(o) { return new Frac(this.num * o.num, this.den * o.den); }
+      div(o) {
+        if (o.num === 0) throw new Error("0으로 나눌 수 없습니다.");
+        return new Frac(this.num * o.den, this.den * o.num);
+      }
+      neg() { return new Frac(-this.num, this.den); }
+      eq(o) { return this.num === o.num && this.den === o.den; }
+      isZero() { return this.num === 0; }
+      toString() { return this.den === 1 ? String(this.num) : `${this.num}/${this.den}`; }
+      toNumber() { return this.num / this.den; }
+    }
+
+    function cloneMatrix(m) {
+      return m.map(row => row.map(x => new Frac(x.num, x.den)));
+    }
+
+    function frac(n) { return Frac.fromInt(n); }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr) {
+      return arr[randInt(0, arr.length - 1)];
+    }
+
+    function randFrac(difficulty) {
+      const intRanges = {
+        easy: [-4, 4],
+        normal: [-6, 6],
+        hard: [-8, 8]
+      };
+      const [lo, hi] = intRanges[difficulty] || intRanges.normal;
+      const useFraction = difficulty !== 'easy' && Math.random() < (difficulty === 'hard' ? 0.35 : 0.2);
+      if (!useFraction) {
+        return frac(randInt(lo, hi));
+      }
+      let den = pick([2, 3, 4]);
+      let num = randInt(lo, hi);
+      if (num === 0) num = 1;
+      return new Frac(num, den);
+    }
+
+    function vectorDot(a, b) {
+      let s = frac(0);
+      for (let i = 0; i < a.length; i++) s = s.add(a[i].mul(b[i]));
+      return s;
+    }
+
+    function vectorCross(a, b) {
+      return [
+        a[1].mul(b[2]).sub(a[2].mul(b[1])),
+        a[2].mul(b[0]).sub(a[0].mul(b[2])),
+        a[0].mul(b[1]).sub(a[1].mul(b[0]))
+      ];
+    }
+
+    function tensorProduct(a, b) {
+      return a.map(x => b.map(y => x.mul(y)));
+    }
+
+    function matMul(A, B) {
+      const rows = A.length;
+      const cols = B[0].length;
+      const inner = B.length;
+      const C = Array.from({ length: rows }, () => Array.from({ length: cols }, () => frac(0)));
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          let s = frac(0);
+          for (let k = 0; k < inner; k++) s = s.add(A[i][k].mul(B[k][j]));
+          C[i][j] = s;
+        }
+      }
+      return C;
+    }
+
+    function det2(A) {
+      return A[0][0].mul(A[1][1]).sub(A[0][1].mul(A[1][0]));
+    }
+
+    function det3(A) {
+      const a = A[0][0], b = A[0][1], c = A[0][2];
+      const d = A[1][0], e = A[1][1], f = A[1][2];
+      const g = A[2][0], h = A[2][1], i = A[2][2];
+      return a.mul(e.mul(i).sub(f.mul(h)))
+        .sub(b.mul(d.mul(i).sub(f.mul(g))))
+        .add(c.mul(d.mul(h).sub(e.mul(g))));
+    }
+
+    function inverse2(A) {
+      const determinant = det2(A);
+      if (determinant.isZero()) return null;
+      return [
+        [A[1][1].div(determinant), A[0][1].neg().div(determinant)],
+        [A[1][0].neg().div(determinant), A[0][0].div(determinant)]
+      ];
+    }
+
+    function squareFreeDecompose(n) {
+      if (n === 0) return { outside: 0, inside: 1 };
+      let outside = 1;
+      let inside = n;
+      for (let p = 2; p * p <= inside; p++) {
+        while (inside % (p * p) === 0) {
+          inside /= (p * p);
+          outside *= p;
+        }
+      }
+      return { outside, inside };
+    }
+
+    function fracSqrtExactString(fracValue) {
+      if (fracValue.num < 0) throw new Error('음수의 실수 제곱근');
+      if (fracValue.num === 0) return '0';
+      const rad = fracValue.num * fracValue.den;
+      const denom = fracValue.den;
+      const { outside, inside } = squareFreeDecompose(Math.abs(rad));
+      if (inside === 1) return new Frac(outside, denom).toString();
+      if (outside === 1 && denom === 1) return `sqrt(${inside})`;
+      if (outside === 1) return `sqrt(${inside})/${denom}`;
+      if (denom === 1) return `${outside}*sqrt(${inside})`;
+      return `${outside}*sqrt(${inside})/${denom}`;
+    }
+
+    function tryParseFracString(str) {
+      if (/^-?\d+$/.test(str)) return new Frac(Number(str), 1);
+      if (/^-?\d+\/\d+$/.test(str)) {
+        const [n, d] = str.split('/').map(Number);
+        return new Frac(n, d);
+      }
+      return null;
+    }
+
+    function combineFracAndSymbol(fr, sign, part) {
+      if (fr.isZero()) return sign === '+' ? part : `-${part}`;
+      return `${fr.toString()} ${sign} ${part}`;
+    }
+
+    function eigenvalues2x2(A) {
+      const trace = A[0][0].add(A[1][1]);
+      const determinant = det2(A);
+      const delta = trace.mul(trace).sub(determinant.mul(frac(4)));
+      const halfTrace = trace.div(frac(2));
+
+      if (delta.isZero()) {
+        return {
+          trace,
+          determinant,
+          delta,
+          lambda1: halfTrace.toString(),
+          lambda2: halfTrace.toString(),
+          raw: [halfTrace, halfTrace],
+          type: 'real'
+        };
+      }
+
+      if (delta.num > 0) {
+        const sqrtDelta = fracSqrtExactString(delta);
+        const parsed = tryParseFracString(sqrtDelta);
+        if (parsed) {
+          const half = parsed.div(frac(2));
+          const l1 = halfTrace.add(half);
+          const l2 = halfTrace.sub(half);
+          return {
+            trace,
+            determinant,
+            delta,
+            lambda1: l1.toString(),
+            lambda2: l2.toString(),
+            raw: [l1, l2],
+            type: 'real'
+          };
+        }
+        const halfSqrt = `(${sqrtDelta})/2`;
+        return {
+          trace,
+          determinant,
+          delta,
+          lambda1: combineFracAndSymbol(halfTrace, '+', halfSqrt),
+          lambda2: combineFracAndSymbol(halfTrace, '-', halfSqrt),
+          raw: null,
+          type: 'irrational'
+        };
+      }
+
+      const absDelta = new Frac(-delta.num, delta.den);
+      const imag = `(${fracSqrtExactString(absDelta)})/2 i`;
+      return {
+        trace,
+        determinant,
+        delta,
+        lambda1: combineFracAndSymbol(halfTrace, '+', imag),
+        lambda2: combineFracAndSymbol(halfTrace, '-', imag),
+        raw: null,
+        type: 'complex'
+      };
+    }
+
+    function solveEigenvectorForLambda(A, lambdaFrac) {
+      const a = A[0][0].sub(lambdaFrac);
+      const b = A[0][1];
+      const c = A[1][0];
+      const d = A[1][1].sub(lambdaFrac);
+
+      if (!b.isZero()) return [b.neg(), a];
+      if (!c.isZero()) return [d, c.neg()];
+      if (!a.isZero()) return [frac(0), frac(1)];
+      if (!d.isZero()) return [frac(1), frac(0)];
+      return [frac(1), frac(0)];
+    }
+
+    function normalizeVector(vec) {
+      let first = vec.find(v => !v.isZero());
+      if (!first) return vec;
+      if (first.num < 0) {
+        return vec.map(v => v.neg());
+      }
+      return vec;
+    }
+
+    function proportional(v, w) {
+      if (v.length !== w.length) return false;
+      let ratio = null;
+      for (let i = 0; i < v.length; i++) {
+        const a = v[i], b = w[i];
+        if (a.isZero() && b.isZero()) continue;
+        if (a.isZero() || b.isZero()) return false;
+        const current = a.div(b);
+        if (ratio === null) ratio = current;
+        else if (!ratio.eq(current)) return false;
+      }
+      return ratio !== null;
+    }
+
+    function matrixToString(A) {
+      return '[' + A.map(row => '[' + row.map(x => x.toString()).join(', ') + ']').join(', ') + ']';
+    }
+
+    function vectorToString(v) {
+      return '(' + v.map(x => x.toString()).join(', ') + ')';
+    }
+
+    function createMatrixInputs(rows, cols, prefix, values = null) {
+      const wrap = document.createElement('div');
+      wrap.className = 'matrix-wrap';
+      const matrix = document.createElement('div');
+      matrix.className = `matrix size-${rows}x${cols}`;
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = `${prefix}_${i}_${j}`;
+          input.value = values ? values[i][j] : '';
+          matrix.appendChild(input);
+        }
+      }
+      wrap.appendChild(matrix);
+      return wrap;
+    }
+
+    function createVectorInputs(size, prefix, values = null) {
+      const wrap = document.createElement('div');
+      wrap.className = 'matrix-wrap';
+      const vector = document.createElement('div');
+      vector.className = `vector size-${size}`;
+      for (let i = 0; i < size; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `${prefix}_${i}`;
+        input.value = values ? values[i] : '';
+        vector.appendChild(input);
+      }
+      wrap.appendChild(vector);
+      return wrap;
+    }
+
+    function readMatrix(prefix, rows, cols) {
+      const A = [];
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+          row.push(Frac.parse(document.getElementById(`${prefix}_${i}_${j}`).value));
+        }
+        A.push(row);
+      }
+      return A;
+    }
+
+    function readVector(prefix, size) {
+      const v = [];
+      for (let i = 0; i < size; i++) {
+        v.push(Frac.parse(document.getElementById(`${prefix}_${i}`).value));
+      }
+      return v;
+    }
+
+    const modeInfo = {
+      dot: {
+        title: '내적',
+        description: '두 벡터의 대응 성분을 곱한 뒤 모두 더한다.',
+        generate(difficulty) {
+          const n = difficulty === 'easy' ? 2 : 3;
+          const a = Array.from({ length: n }, () => randFrac(difficulty));
+          const b = Array.from({ length: n }, () => randFrac(difficulty));
+          return { a, b, answer: vectorDot(a, b) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          const box1 = document.createElement('div');
+          box1.className = 'box';
+          box1.innerHTML = `<h3>문제</h3><div class="formula">a = ${vectorToString(problem.a)}\nb = ${vectorToString(problem.b)}</div>`;
+          const box2 = document.createElement('div');
+          box2.className = 'box soft';
+          box2.innerHTML = `<h3>입력</h3><div class="muted">a · b 값을 입력</div>`;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'user_scalar';
+          input.placeholder = '예: 3/2';
+          box2.appendChild(document.createElement('div')).style.height = '10px';
+          box2.appendChild(input);
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          box2.appendChild(document.createElement('div')).style.height = '12px';
+          box2.appendChild(btn);
+          grid.append(box1, box2);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = Frac.parse(document.getElementById('user_scalar').value);
+          const parts = problem.a.map((x, i) => `${x.toString()}×${problem.b[i].toString()}`);
+          const ok = user.eq(problem.answer);
+          return {
+            ok,
+            message: `계산: ${parts.join(' + ')} = ${problem.answer.toString()}\n정답: ${problem.answer.toString()}`
+          };
+        },
+        answer(problem) {
+          return `정답: ${problem.answer.toString()}`;
+        },
+        clear() {
+          const el = document.getElementById('user_scalar');
+          if (el) el.value = '';
+        }
+      },
+
+      cross: {
+        title: '외적',
+        description: '3차원 벡터 a × b 를 계산한다.',
+        generate(difficulty) {
+          const a = Array.from({ length: 3 }, () => randFrac(difficulty));
+          const b = Array.from({ length: 3 }, () => randFrac(difficulty));
+          return { a, b, answer: vectorCross(a, b) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="formula">a = ${vectorToString(problem.a)}\nb = ${vectorToString(problem.b)}</div>`;
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3><div class="muted">a × b = (x, y, z)</div>`;
+          right.appendChild(createVectorInputs(3, 'user_vector'));
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = readVector('user_vector', 3);
+          const ok = user.every((x, i) => x.eq(problem.answer[i]));
+          return {
+            ok,
+            message: `정답: ${vectorToString(problem.answer)}`
+          };
+        },
+        answer(problem) {
+          return `정답: ${vectorToString(problem.answer)}`;
+        },
+        clear() {
+          for (let i = 0; i < 3; i++) {
+            const el = document.getElementById(`user_vector_${i}`);
+            if (el) el.value = '';
+          }
+        }
+      },
+
+      tensor: {
+        title: '텐서곱',
+        description: '벡터 a ⊗ b 를 행렬 형태로 채운다.',
+        generate(difficulty) {
+          const rows = difficulty === 'easy' ? 2 : 3;
+          const cols = difficulty === 'hard' ? 3 : 2;
+          const a = Array.from({ length: rows }, () => randFrac(difficulty));
+          const b = Array.from({ length: cols }, () => randFrac(difficulty));
+          return { a, b, answer: tensorProduct(a, b), rows, cols };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="formula">a = ${vectorToString(problem.a)}\nb = ${vectorToString(problem.b)}\n\na ⊗ b 를 행렬로 채워라.</div>`;
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3><div class="muted">결과는 ${problem.rows}×${problem.cols} 행렬</div>`;
+          right.appendChild(createMatrixInputs(problem.rows, problem.cols, 'user_matrix'));
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = readMatrix('user_matrix', problem.rows, problem.cols);
+          let ok = true;
+          for (let i = 0; i < problem.rows; i++) {
+            for (let j = 0; j < problem.cols; j++) {
+              if (!user[i][j].eq(problem.answer[i][j])) ok = false;
+            }
+          }
+          return { ok, message: `정답: ${matrixToString(problem.answer)}` };
+        },
+        answer(problem) { return `정답: ${matrixToString(problem.answer)}`; },
+        clear(problem) {
+          for (let i = 0; i < problem.rows; i++) for (let j = 0; j < problem.cols; j++) {
+            const el = document.getElementById(`user_matrix_${i}_${j}`);
+            if (el) el.value = '';
+          }
+        }
+      },
+
+      matmul: {
+        title: '행렬 곱셈',
+        description: '행과 열의 내적으로 결과 행렬을 계산한다.',
+        generate(difficulty) {
+          let A, B;
+          if (difficulty === 'easy') {
+            A = Array.from({ length: 2 }, () => Array.from({ length: 2 }, () => randFrac(difficulty)));
+            B = Array.from({ length: 2 }, () => Array.from({ length: 2 }, () => randFrac(difficulty)));
+          } else if (difficulty === 'normal') {
+            A = Array.from({ length: 2 }, () => Array.from({ length: 3 }, () => randFrac(difficulty)));
+            B = Array.from({ length: 3 }, () => Array.from({ length: 2 }, () => randFrac(difficulty)));
+          } else {
+            A = Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => randFrac(difficulty)));
+            B = Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => randFrac(difficulty)));
+          }
+          return { A, B, answer: matMul(A, B) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="muted">A와 B를 곱한 결과를 입력</div>`;
+          left.appendChild(document.createTextNode('A = '));
+          left.appendChild(createMatrixInputs(problem.A.length, problem.A[0].length, 'displayA', problem.A.map(r => r.map(x => x.toString()))));
+          left.appendChild(document.createTextNode('B = '));
+          left.appendChild(createMatrixInputs(problem.B.length, problem.B[0].length, 'displayB', problem.B.map(r => r.map(x => x.toString()))));
+          Array.from(left.querySelectorAll('input')).forEach(el => el.readOnly = true);
+
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3><div class="muted">결과 행렬 ${problem.answer.length}×${problem.answer[0].length}</div>`;
+          right.appendChild(createMatrixInputs(problem.answer.length, problem.answer[0].length, 'user_matrix'));
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = readMatrix('user_matrix', problem.answer.length, problem.answer[0].length);
+          let ok = true;
+          for (let i = 0; i < problem.answer.length; i++) {
+            for (let j = 0; j < problem.answer[0].length; j++) {
+              if (!user[i][j].eq(problem.answer[i][j])) ok = false;
+            }
+          }
+          return { ok, message: `정답: ${matrixToString(problem.answer)}` };
+        },
+        answer(problem) { return `정답: ${matrixToString(problem.answer)}`; },
+        clear(problem) {
+          for (let i = 0; i < problem.answer.length; i++) for (let j = 0; j < problem.answer[0].length; j++) {
+            const el = document.getElementById(`user_matrix_${i}_${j}`);
+            if (el) el.value = '';
+          }
+        }
+      },
+
+      inverse: {
+        title: '역행렬',
+        description: '2×2 행렬의 역행렬을 계산한다. det(A)=0 이면 역행렬이 없다.',
+        generate(difficulty) {
+          let A;
+          do {
+            A = Array.from({ length: 2 }, () => Array.from({ length: 2 }, () => randFrac(difficulty)));
+          } while (det2(A).isZero());
+          return { A, answer: inverse2(A) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="muted">A의 역행렬 A⁻¹을 입력</div>`;
+          left.appendChild(document.createTextNode('A = '));
+          left.appendChild(createMatrixInputs(2, 2, 'displayA', problem.A.map(r => r.map(x => x.toString()))));
+          Array.from(left.querySelectorAll('input')).forEach(el => el.readOnly = true);
+
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3>`;
+          right.appendChild(createMatrixInputs(2, 2, 'user_matrix'));
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = readMatrix('user_matrix', 2, 2);
+          let ok = true;
+          for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) if (!user[i][j].eq(problem.answer[i][j])) ok = false;
+          return { ok, message: `정답: ${matrixToString(problem.answer)}` };
+        },
+        answer(problem) { return `정답: ${matrixToString(problem.answer)}`; },
+        clear() {
+          for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+            const el = document.getElementById(`user_matrix_${i}_${j}`);
+            if (el) el.value = '';
+          }
+        }
+      },
+
+      det: {
+        title: '행렬식',
+        description: '2×2 또는 3×3 행렬의 determinant를 계산한다.',
+        generate(difficulty) {
+          const n = difficulty === 'easy' ? 2 : 3;
+          const A = Array.from({ length: n }, () => Array.from({ length: n }, () => randFrac(difficulty)));
+          return { A, n, answer: n === 2 ? det2(A) : det3(A) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="muted">det(A)를 계산</div>`;
+          left.appendChild(document.createTextNode('A = '));
+          left.appendChild(createMatrixInputs(problem.n, problem.n, 'displayA', problem.A.map(r => r.map(x => x.toString()))));
+          Array.from(left.querySelectorAll('input')).forEach(el => el.readOnly = true);
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3>`;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'user_scalar';
+          right.appendChild(input);
+          right.appendChild(document.createElement('div')).style.height = '12px';
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const user = Frac.parse(document.getElementById('user_scalar').value);
+          return { ok: user.eq(problem.answer), message: `정답: ${problem.answer.toString()}` };
+        },
+        answer(problem) { return `정답: ${problem.answer.toString()}`; },
+        clear() {
+          const el = document.getElementById('user_scalar');
+          if (el) el.value = '';
+        }
+      },
+
+      eigenvalue: {
+        title: '2×2 고윳값',
+        description: '2×2 행렬의 고윳값을 구한다. sqrt(...) 형태와 복소수 i 를 사용한다.',
+        generate(difficulty) {
+          if (difficulty === 'easy') {
+            const l1 = frac(randInt(-4, 4));
+            const l2 = frac(randInt(-4, 4));
+            const A = [[l1, frac(0)], [frac(0), l2]];
+            return { A, answer: eigenvalues2x2(A) };
+          }
+          const A = Array.from({ length: 2 }, () => Array.from({ length: 2 }, () => randFrac(difficulty)));
+          return { A, answer: eigenvalues2x2(A) };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="muted">고윳값 λ₁, λ₂를 입력</div>`;
+          left.appendChild(document.createTextNode('A = '));
+          left.appendChild(createMatrixInputs(2, 2, 'displayA', problem.A.map(r => r.map(x => x.toString()))));
+          Array.from(left.querySelectorAll('input')).forEach(el => el.readOnly = true);
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3><div class="muted">현재 채점은 정답 보기 중심이다. 복소수/무리수의 자유형식 파싱은 아직 단순화하지 않았다.</div>`;
+          const input1 = document.createElement('input');
+          input1.type = 'text';
+          input1.id = 'user_lambda1';
+          input1.placeholder = '예: 3, 1/2, (sqrt(5))/2';
+          const input2 = document.createElement('input');
+          input2.type = 'text';
+          input2.id = 'user_lambda2';
+          input2.placeholder = '예: -1, 2 - (sqrt(3))/2';
+          right.append(input1, document.createElement('div'), input2, document.createElement('div'));
+          right.lastChild.style.height = '12px';
+          const btn = document.createElement('button');
+          btn.className = 'action subtle';
+          btn.textContent = '정답 보기 권장';
+          btn.onclick = () => showAnswerOnly();
+          right.appendChild(btn);
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const u1 = document.getElementById('user_lambda1').value.trim().replace(/\s+/g, '');
+          const u2 = document.getElementById('user_lambda2').value.trim().replace(/\s+/g, '');
+          const a1 = problem.answer.lambda1.replace(/\s+/g, '');
+          const a2 = problem.answer.lambda2.replace(/\s+/g, '');
+          const ok = (u1 === a1 && u2 === a2) || (u1 === a2 && u2 === a1);
+          return {
+            ok,
+            message: `trace(A) = ${problem.answer.trace.toString()}\ndet(A) = ${problem.answer.determinant.toString()}\nΔ = ${problem.answer.delta.toString()}\n정답: λ₁ = ${problem.answer.lambda1}, λ₂ = ${problem.answer.lambda2}`
+          };
+        },
+        answer(problem) {
+          return `trace(A) = ${problem.answer.trace.toString()}\ndet(A) = ${problem.answer.determinant.toString()}\nΔ = ${problem.answer.delta.toString()}\n정답: λ₁ = ${problem.answer.lambda1}, λ₂ = ${problem.answer.lambda2}`;
+        },
+        clear() {
+          const a = document.getElementById('user_lambda1');
+          const b = document.getElementById('user_lambda2');
+          if (a) a.value = '';
+          if (b) b.value = '';
+        }
+      },
+
+      eigenvector: {
+        title: '2×2 고유벡터',
+        description: '2×2 행렬의 고유벡터를 구한다. 현재는 유리수 고윳값 문제만 낸다.',
+        generate() {
+          let l1 = frac(randInt(-4, 4));
+          let l2 = frac(randInt(-4, 4));
+          while (l1.eq(l2)) l2 = frac(randInt(-4, 4));
+          const A = [[l1, frac(0)], [frac(0), l2]];
+          const eig = eigenvalues2x2(A);
+          const v1 = normalizeVector(solveEigenvectorForLambda(A, eig.raw[0]));
+          const v2 = normalizeVector(solveEigenvectorForLambda(A, eig.raw[1]));
+          return { A, eig, vectors: [v1, v2] };
+        },
+        render(problem) {
+          const area = document.getElementById('problemArea');
+          area.innerHTML = '';
+          const left = document.createElement('div');
+          left.className = 'box';
+          left.innerHTML = `<h3>문제</h3><div class="muted">각 고윳값에 대한 고유벡터 하나씩 입력</div>`;
+          left.appendChild(document.createTextNode('A = '));
+          left.appendChild(createMatrixInputs(2, 2, 'displayA', problem.A.map(r => r.map(x => x.toString()))));
+          Array.from(left.querySelectorAll('input')).forEach(el => el.readOnly = true);
+          const eigText = document.createElement('div');
+          eigText.className = 'formula';
+          eigText.textContent = `λ₁ = ${problem.eig.lambda1}\nλ₂ = ${problem.eig.lambda2}`;
+          left.appendChild(eigText);
+
+          const right = document.createElement('div');
+          right.className = 'box soft';
+          right.innerHTML = `<h3>입력</h3><div class="muted">v₁, v₂는 스칼라배까지 정답으로 인정</div>`;
+          const label1 = document.createElement('div');
+          label1.textContent = 'λ₁의 고유벡터';
+          right.appendChild(label1);
+          right.appendChild(createVectorInputs(2, 'user_v1'));
+          const label2 = document.createElement('div');
+          label2.textContent = 'λ₂의 고유벡터';
+          right.appendChild(label2);
+          right.appendChild(createVectorInputs(2, 'user_v2'));
+          const btn = document.createElement('button');
+          btn.className = 'action';
+          btn.textContent = '채점';
+          btn.onclick = gradeCurrent;
+          right.appendChild(btn);
+          const grid = document.createElement('div');
+          grid.className = 'grid-2';
+          grid.append(left, right);
+          area.appendChild(grid);
+        },
+        grade(problem) {
+          const u1 = readVector('user_v1', 2);
+          const u2 = readVector('user_v2', 2);
+          const ok = proportional(u1, problem.vectors[0]) && proportional(u2, problem.vectors[1]);
+          return {
+            ok,
+            message: `정답 예시:\nλ₁ → ${vectorToString(problem.vectors[0])}\nλ₂ → ${vectorToString(problem.vectors[1])}`
+          };
+        },
+        answer(problem) {
+          return `정답 예시:\nλ₁ → ${vectorToString(problem.vectors[0])}\nλ₂ → ${vectorToString(problem.vectors[1])}`;
+        },
+        clear() {
+          for (let i = 0; i < 2; i++) {
+            const a = document.getElementById(`user_v1_${i}`);
+            const b = document.getElementById(`user_v2_${i}`);
+            if (a) a.value = '';
+            if (b) b.value = '';
+          }
+        }
+      }
+    };
+
+    const state = {
+      mode: 'dot',
+      difficulty: 'normal',
+      problem: null,
+      correct: 0,
+      wrong: 0
+    };
+
+    function updateScore() {
+      document.getElementById('correctCount').textContent = state.correct;
+      document.getElementById('wrongCount').textContent = state.wrong;
+    }
+
+    function setFeedback(type, text) {
+      const box = document.getElementById('feedbackArea');
+      box.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = `status ${type}`;
+      div.textContent = text;
+      box.appendChild(div);
+    }
+
+    function renderMode() {
+      const info = modeInfo[state.mode];
+      document.getElementById('modeTitle').textContent = info.title;
+      document.getElementById('modeDescription').textContent = info.description;
+      document.querySelectorAll('.menu-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === state.mode);
+      });
+      newProblem();
+    }
+
+    function newProblem() {
+      const info = modeInfo[state.mode];
+      state.difficulty = document.getElementById('difficultySelect').value;
+      state.problem = info.generate(state.difficulty);
+      info.render(state.problem);
+      document.getElementById('answerArea').innerHTML = '';
+      document.getElementById('feedbackArea').innerHTML = '';
+    }
+
+    function gradeCurrent() {
+      try {
+        const info = modeInfo[state.mode];
+        const result = info.grade(state.problem);
+        if (result.ok) {
+          state.correct += 1;
+          setFeedback('good', '정답\n' + result.message);
+        } else {
+          state.wrong += 1;
+          setFeedback('bad', '오답\n' + result.message);
+        }
+        updateScore();
+      } catch (err) {
+        setFeedback('bad', err.message);
+      }
+    }
+
+    function showAnswerOnly() {
+      const info = modeInfo[state.mode];
+      setFeedback('info', info.answer(state.problem));
+    }
+
+    document.getElementById('newProblemBtn').addEventListener('click', newProblem);
+    document.getElementById('showAnswerBtn').addEventListener('click', showAnswerOnly);
+    document.getElementById('clearInputBtn').addEventListener('click', () => {
+      const info = modeInfo[state.mode];
+      if (info.clear) info.clear(state.problem);
+      document.getElementById('feedbackArea').innerHTML = '';
+    });
+    document.getElementById('difficultySelect').addEventListener('change', newProblem);
+
+    document.querySelectorAll('.menu-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        renderMode();
+      });
+    });
+
+    renderMode();
+  </script>
+</body>
+</html>
