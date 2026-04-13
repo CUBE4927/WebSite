@@ -1,57 +1,111 @@
 const svg = document.getElementById("board");
-const SIZE = 800;
-const SCALE = 80; // 좌표 스케일
 
+const SIZE = 900;
+const CENTER = SIZE / 2;
+const SCALE = 95;
+
+// 보드 범위: |f|<=4, |g|<=4
+const MAX_F = 4;
+const MAX_G = 4;
+
+// 화면 좌표 변환
 function toScreen(x, y) {
   return {
-    x: SIZE / 2 + x * SCALE,
-    y: SIZE / 2 - y * SCALE
+    x: CENTER + x * SCALE,
+    y: CENTER - y * SCALE
   };
 }
 
-// f = x^2 - y^2 = k
-function drawFCurve(k) {
-  let path = "";
+function makePath(points) {
+  if (points.length === 0) return "";
 
-  for (let x = -5; x <= 5; x += 0.05) {
-    let y = Math.sqrt(Math.abs(x * x - k));
-    if (!isNaN(y)) {
-      let p1 = toScreen(x, y);
-      let p2 = toScreen(x, -y);
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x} ${points[i].y}`;
+  }
+  return d;
+}
 
-      path += `M ${p1.x} ${p1.y} `;
-      path += `L ${p2.x} ${p2.y} `;
+function appendPath(points) {
+  if (points.length < 2) return;
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", makePath(points));
+  path.setAttribute("class", "board-line");
+  svg.appendChild(path);
+}
+
+// 조건이 끊기는 부분에서 path를 분리해서 그림
+function drawSegmentedCurve(samplePoints, isValid) {
+  let currentSegment = [];
+
+  for (const p of samplePoints) {
+    if (isValid(p.x, p.y)) {
+      currentSegment.push(toScreen(p.x, p.y));
+    } else {
+      appendPath(currentSegment);
+      currentSegment = [];
     }
   }
 
-  let elem = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  elem.setAttribute("d", path);
-  elem.setAttribute("class", "curve-f");
-  svg.appendChild(elem);
+  appendPath(currentSegment);
+}
+
+// f = x^2 - y^2 = k
+// 단, |g| = |2xy| <= 4 인 부분만 그림
+function drawFCurve(k) {
+  const branches = [[], []];
+
+  for (let x = -6; x <= 6; x += 0.01) {
+    const val = x * x - k;
+    if (val < 0) continue;
+
+    const y = Math.sqrt(val);
+    branches[0].push({ x, y });
+    branches[1].push({ x, y: -y });
+  }
+
+  for (const branch of branches) {
+    drawSegmentedCurve(
+      branch,
+      (x, y) => Math.abs(2 * x * y) <= MAX_G + 1e-9
+    );
+  }
 }
 
 // g = 2xy = k
+// 단, |f| = |x^2 - y^2| <= 4 인 부분만 그림
 function drawGCurve(k) {
-  let path = "";
+  const left = [];
+  const right = [];
 
-  for (let x = -5; x <= 5; x += 0.05) {
-    let y = k / (2 * x);
-    if (!isNaN(y) && Math.abs(y) < 10) {
-      let p = toScreen(x, y);
-      path += (path === "" ? "M" : "L") + ` ${p.x} ${p.y}`;
-    }
+  for (let x = -6; x <= -0.02; x += 0.01) {
+    const y = k / (2 * x);
+    left.push({ x, y });
   }
 
-  let elem = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  elem.setAttribute("d", path);
-  elem.setAttribute("class", "curve-g");
-  svg.appendChild(elem);
+  for (let x = 0.02; x <= 6; x += 0.01) {
+    const y = k / (2 * x);
+    right.push({ x, y });
+  }
+
+  drawSegmentedCurve(
+    left,
+    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9
+  );
+
+  drawSegmentedCurve(
+    right,
+    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9
+  );
 }
 
-// 여러 곡선 그리기
-for (let k = -4; k <= 4; k++) {
-  if (k !== 0) {
-    drawFCurve(k);
-    drawGCurve(k);
-  }
+// f = -4 ~ 4
+for (let k = -MAX_F; k <= MAX_F; k++) {
+  drawFCurve(k);
+}
+
+// g = -4 ~ 4
+for (let k = -MAX_G; k <= MAX_G; k++) {
+  drawGCurve(k);
 }
