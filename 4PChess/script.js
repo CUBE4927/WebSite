@@ -4,11 +4,13 @@ const SIZE = 900;
 const CENTER = SIZE / 2;
 const SCALE = 95;
 
-// 보드 범위: |f|<=4, |g|<=4
 const MAX_F = 4;
 const MAX_G = 4;
 
-// 화면 좌표 변환
+// 정수 레벨만 사용
+const F_LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+const G_LEVELS = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+
 function toScreen(x, y) {
   return {
     x: CENTER + x * SCALE,
@@ -17,7 +19,7 @@ function toScreen(x, y) {
 }
 
 function makePath(points) {
-  if (points.length === 0) return "";
+  if (points.length < 2) return "";
 
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
@@ -26,86 +28,149 @@ function makePath(points) {
   return d;
 }
 
-function appendPath(points) {
+function appendPath(points, isBoundary = false) {
   if (points.length < 2) return;
 
+  const d = makePath(points);
+  if (!d) return;
+
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", makePath(points));
-  path.setAttribute("class", "board-line");
+  path.setAttribute("d", d);
+  path.setAttribute(
+    "class",
+    isBoundary ? "board-line board-boundary" : "board-line"
+  );
   svg.appendChild(path);
 }
 
-// 조건이 끊기는 부분에서 path를 분리해서 그림
-function drawSegmentedCurve(samplePoints, isValid) {
+function drawSegmentedCurve(samplePoints, isValid, isBoundary = false) {
   let currentSegment = [];
 
   for (const p of samplePoints) {
     if (isValid(p.x, p.y)) {
       currentSegment.push(toScreen(p.x, p.y));
     } else {
-      appendPath(currentSegment);
+      appendPath(currentSegment, isBoundary);
       currentSegment = [];
     }
   }
 
-  appendPath(currentSegment);
+  appendPath(currentSegment, isBoundary);
 }
 
 // f = x^2 - y^2 = k
-// 단, |g| = |2xy| <= 4 인 부분만 그림
+// 보드 내부 조건 |g| = |2xy| <= MAX_G 를 만족하는 부분만 그림
 function drawFCurve(k) {
+  const isBoundary = Math.abs(k) === MAX_F;
   const branches = [[], []];
 
-  for (let x = -6; x <= 6; x += 0.01) {
-    const val = x * x - k;
-    if (val < 0) continue;
+  if (k >= 0) {
+    // y = ±sqrt(x^2 - k), 단 |x| >= sqrt(k)
+    const minAbsX = Math.sqrt(k);
 
-    const y = Math.sqrt(val);
-    branches[0].push({ x, y });
-    branches[1].push({ x, y: -y });
+    for (let x = -6; x <= -minAbsX; x += 0.01) {
+      const y = Math.sqrt(x * x - k);
+      branches[0].push({ x, y });
+      branches[1].push({ x, y: -y });
+    }
+
+    for (let x = minAbsX; x <= 6; x += 0.01) {
+      const y = Math.sqrt(x * x - k);
+      branches[0].push({ x, y });
+      branches[1].push({ x, y: -y });
+    }
+  } else {
+    // y = ±sqrt(x^2 + |k|)
+    const a = -k;
+    for (let x = -6; x <= 6; x += 0.01) {
+      const y = Math.sqrt(x * x + a);
+      branches[0].push({ x, y });
+      branches[1].push({ x, y: -y });
+    }
   }
 
   for (const branch of branches) {
     drawSegmentedCurve(
       branch,
-      (x, y) => Math.abs(2 * x * y) <= MAX_G + 1e-9
+      (x, y) => Math.abs(2 * x * y) <= MAX_G + 1e-9,
+      isBoundary
     );
   }
 }
 
 // g = 2xy = k
-// 단, |f| = |x^2 - y^2| <= 4 인 부분만 그림
+// 보드 내부 조건 |f| = |x^2 - y^2| <= MAX_F 를 만족하는 부분만 그림
 function drawGCurve(k) {
+  const isBoundary = Math.abs(k) === MAX_G;
+
+  // k = 0 은 x축, y축
+  if (k === 0) {
+    const xAxis = [];
+    const yAxis = [];
+
+    for (let x = -6; x <= 6; x += 0.01) {
+      xAxis.push({ x, y: 0 });
+    }
+
+    for (let y = -6; y <= 6; y += 0.01) {
+      yAxis.push({ x: 0, y });
+    }
+
+    drawSegmentedCurve(
+      xAxis,
+      (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9,
+      isBoundary
+    );
+
+    drawSegmentedCurve(
+      yAxis,
+      (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9,
+      isBoundary
+    );
+
+    return;
+  }
+
   const left = [];
   const right = [];
 
-  for (let x = -6; x <= -0.02; x += 0.01) {
+  for (let x = -6; x <= -0.1; x += 0.01) {
     const y = k / (2 * x);
+    if (!Number.isFinite(y)) continue;
+    if (Math.abs(y) > 6) continue;
     left.push({ x, y });
   }
 
-  for (let x = 0.02; x <= 6; x += 0.01) {
+  for (let x = 0.1; x <= 6; x += 0.01) {
     const y = k / (2 * x);
+    if (!Number.isFinite(y)) continue;
+    if (Math.abs(y) > 6) continue;
     right.push({ x, y });
   }
 
   drawSegmentedCurve(
     left,
-    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9
+    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9,
+    isBoundary
   );
 
   drawSegmentedCurve(
     right,
-    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9
+    (x, y) => Math.abs(x * x - y * y) <= MAX_F + 1e-9,
+    isBoundary
   );
 }
 
-// f = -4 ~ 4
-for (let k = -MAX_F; k <= MAX_F; k++) {
-  drawFCurve(k);
+function drawBoard() {
+  svg.innerHTML = "";
+
+  for (const k of F_LEVELS) {
+    drawFCurve(k);
+  }
+
+  for (const k of G_LEVELS) {
+    drawGCurve(k);
+  }
 }
 
-// g = -4 ~ 4
-for (let k = -MAX_G; k <= MAX_G; k++) {
-  drawGCurve(k);
-}
+drawBoard();
