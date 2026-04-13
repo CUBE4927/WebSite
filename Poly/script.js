@@ -46,6 +46,18 @@ function fractionToString(num, den) {
   return d === 1 ? `${n}` : `${n}/${d}`;
 }
 
+function trimLeadingZeros(coeffs) {
+  const out = coeffs.slice();
+  while (out.length > 1 && out[0] === 0) out.shift();
+  return out;
+}
+
+function polyDegree(coeffs) {
+  const c = trimLeadingZeros(coeffs);
+  if (c.length === 1 && c[0] === 0) return -Infinity;
+  return c.length - 1;
+}
+
 function parsePolynomial(input) {
   let s = input.replace(/\s+/g, "");
   if (!s) throw new Error("입력이 비어 있습니다.");
@@ -105,236 +117,254 @@ function parsePolynomial(input) {
     coeffs.push(coeffMap.get(e) || 0);
   }
 
-  while (coeffs.length > 1 && coeffs[0] === 0) coeffs.shift();
-
-  return coeffs;
-}
-
-function polyDegree(coeffs) {
-  for (let i = 0; i < coeffs.length; i++) {
-    if (coeffs[i] !== 0) return coeffs.length - 1 - i;
-  }
-  return -Infinity;
+  return trimLeadingZeros(coeffs);
 }
 
 function polyToString(coeffs) {
-  const deg = polyDegree(coeffs);
-  if (deg === -Infinity) return "0";
+  const c = trimLeadingZeros(coeffs);
+  if (c.length === 1 && c[0] === 0) return "0";
 
   let result = "";
-  for (let i = 0; i < coeffs.length; i++) {
-    const c = coeffs[i];
-    if (c === 0) continue;
+  const deg = c.length - 1;
 
-    const e = coeffs.length - 1 - i;
-    const absC = Math.abs(c);
+  for (let i = 0; i < c.length; i++) {
+    const coef = c[i];
+    if (coef === 0) continue;
+
+    const exp = deg - i;
+    const absCoef = Math.abs(coef);
 
     let term = "";
-    if (e === 0) {
-      term = `${absC}`;
-    } else if (e === 1) {
-      term = absC === 1 ? "x" : `${absC}x`;
+    if (exp === 0) {
+      term = `${absCoef}`;
+    } else if (exp === 1) {
+      term = absCoef === 1 ? "x" : `${absCoef}x`;
     } else {
-      term = absC === 1 ? `x^${e}` : `${absC}x^${e}`;
+      term = absCoef === 1 ? `x^${exp}` : `${absCoef}x^${exp}`;
     }
 
     if (result === "") {
-      result += c < 0 ? "-" + term : term;
+      result = coef < 0 ? `-${term}` : term;
     } else {
-      result += c < 0 ? " - " + term : " + " + term;
+      result += coef < 0 ? ` - ${term}` : ` + ${term}`;
     }
   }
 
-  return result || "0";
-}
-
-function evaluateRational(coeffs, p, q) {
-  const n = coeffs.length - 1;
-  let sumNum = 0;
-  let commonDen = 1;
-
-  for (let i = 0; i <= n; i++) {
-    const c = coeffs[i];
-    const exp = n - i;
-
-    const termNum = c * (p ** exp) * (commonDen === 1 ? 1 : 1);
-    const termDen = q ** exp;
-
-    const newDen = commonDen * termDen;
-    sumNum = sumNum * termDen + termNum * commonDen;
-    commonDen = newDen;
-
-    const g = gcd(Math.abs(sumNum), commonDen);
-    sumNum /= g;
-    commonDen /= g;
-  }
-
-  return [sumNum, commonDen];
-}
-
-function syntheticDivideByLinear(coeffs, p, q) {
-  // (qx - p) 로 나눔. 근은 p/q
-  const n = coeffs.length - 1;
-  const out = [coeffs[0]];
-
-  for (let i = 1; i < coeffs.length; i++) {
-    const next = q * coeffs[i] + p * out[i - 1];
-    out.push(next);
-  }
-
-  const remainder = out[out.length - 1];
-  out.pop();
-
-  const quotient = out.map((v, idx) => {
-    const power = n - 1 - idx;
-    return v / (q ** (n - 1 - power));
-  });
-
-  return { rawQuotient: out, remainder };
-}
-
-function divideByRoot(coeffs, p, q) {
-  // Horner 방식으로 root = p/q 처리
-  const n = coeffs.length - 1;
-  const b = [coeffs[0]];
-  for (let i = 1; i <= n; i++) {
-    const val = coeffs[i] * q + b[i - 1] * p;
-    b.push(val);
-  }
-
-  const remainder = b[n];
-  if (remainder !== 0) return null;
-
-  const quotient = [];
-  for (let i = 0; i < n; i++) {
-    quotient.push(b[i] / (q ** (i + 1 - 1)));
-  }
-
-  // 위 quotient는 바로 쓸 수 없으니 안전하게 다시 계산
-  const actual = [];
-  let current = coeffs[0];
-  actual.push(current);
-
-  for (let i = 1; i < coeffs.length - 1; i++) {
-    current = coeffs[i] + current * (p / q);
-    if (!Number.isInteger(current)) {
-      // 정수 계수 보장을 위해 다른 방식 사용
-      return divideByLinearExact(coeffs, p, q);
-    }
-    actual.push(current);
-  }
-
-  return { quotient: actual, remainder: 0 };
-}
-
-function divideByLinearExact(coeffs, p, q) {
-  // f(x) = (qx - p) * g(x) 를 정수계수 범위에서 처리
-  // 실제로는 root = p/q가 근일 때, primitive 정수 다항식이면
-  // 선형인수는 (qx - p) 꼴로 잡는 것이 자연스럽다.
-  const n = coeffs.length - 1;
-  const a = coeffs.slice();
-  const g = new Array(n).fill(0);
-
-  g[0] = a[0];
-  for (let i = 1; i < n; i++) {
-    const numerator = a[i] + p * g[i - 1];
-    if (numerator % q !== 0) return null;
-    g[i] = numerator / q;
-  }
-
-  const lastCheck = a[n] + p * g[n - 1];
-  if (lastCheck !== 0) return null;
-
-  return { quotient: g, remainder: 0 };
+  return result;
 }
 
 function primitiveNormalize(coeffs) {
-  if (coeffs.every(c => c === 0)) return { content: 0, coeffs: [0] };
+  const c = trimLeadingZeros(coeffs);
+  if (c.length === 1 && c[0] === 0) return { content: 0, coeffs: [0] };
 
-  const content = gcdArray(coeffs);
-  let out = coeffs.map(c => c / content);
+  const content = gcdArray(c);
+  let out = c.map(v => v / content);
 
   if (out[0] < 0) {
-    out = out.map(c => -c);
+    out = out.map(v => -v);
     return { content: -content, coeffs: out };
   }
 
   return { content, coeffs: out };
 }
 
-function candidateRationalRoots(coeffs) {
-  const lead = coeffs[0];
-  const constant = coeffs[coeffs.length - 1];
+function evalPolyRational(coeffs, p, q) {
+  let num = coeffs[0];
+  let den = 1;
 
-  if (constant === 0) {
-    return [[0, 1]];
+  for (let i = 1; i < coeffs.length; i++) {
+    num = num * p + coeffs[i] * den * q;
+    den *= q;
+    const g = gcd(Math.abs(num), den);
+    num /= g;
+    den /= g;
   }
 
-  const pList = divisors(constant);
-  const qList = divisors(lead);
-  const set = new Set();
+  return [num, den];
+}
 
-  for (const p of pList) {
-    for (const q of qList) {
-      const [rn, rd] = reduceFraction(p, q);
-      set.add(`${rn}/${rd}`);
-      set.add(`${-rn}/${rd}`);
+function candidateRationalRoots(coeffs) {
+  const c = trimLeadingZeros(coeffs);
+  const leading = c[0];
+  const constant = c[c.length - 1];
+
+  if (constant === 0) return [[0, 1]];
+
+  const ps = divisors(constant);
+  const qs = divisors(leading);
+  const seen = new Set();
+  const result = [];
+
+  for (const p of ps) {
+    for (const q of qs) {
+      const a = reduceFraction(p, q);
+      const b = reduceFraction(-p, q);
+      const s1 = `${a[0]}/${a[1]}`;
+      const s2 = `${b[0]}/${b[1]}`;
+
+      if (!seen.has(s1)) {
+        seen.add(s1);
+        result.push(a);
+      }
+      if (!seen.has(s2)) {
+        seen.add(s2);
+        result.push(b);
+      }
     }
   }
 
-  return [...set]
-    .map(s => s.split("/").map(Number))
-    .sort((a, b) => (a[0] / a[1]) - (b[0] / b[1]));
-}
-
-function isRoot(coeffs, p, q) {
-  let value = 0;
-  for (const c of coeffs) {
-    value = value * (p / q) + c;
-  }
-  return Math.abs(value) < 1e-12;
-}
-
-function discriminantOfQuadratic(coeffs) {
-  if (coeffs.length !== 3) return null;
-  const [a, b, c] = coeffs;
-  return b * b - 4 * a * c;
-}
-
-function isPerfectSquare(n) {
-  if (n < 0) return false;
-  const r = Math.round(Math.sqrt(n));
-  return r * r === n;
-}
-
-function factorQuadraticOverQ(coeffs) {
-  const [a, b, c] = coeffs;
-  const D = b * b - 4 * a * c;
-  if (D < 0 || !isPerfectSquare(D)) return null;
-
-  const s = Math.round(Math.sqrt(D));
-  const r1n = -b + s;
-  const r2n = -b - s;
-  const den = 2 * a;
-
-  const f1 = reduceFraction(r1n, den);
-  const f2 = reduceFraction(r2n, den);
-
-  return [f1, f2];
+  result.sort((u, v) => u[0] / u[1] - v[0] / v[1]);
+  return result;
 }
 
 function linearFactorStringFromRoot(p, q) {
   const [rn, rd] = reduceFraction(p, q);
+
   if (rn === 0) return "x";
   if (rd === 1) {
     return rn > 0 ? `(x - ${rn})` : `(x + ${-rn})`;
   }
-  return `(${rd}x ${rn < 0 ? "+" : "-"} ${Math.abs(rn)})`;
+  return `(${rd}x ${rn > 0 ? "-" : "+"} ${Math.abs(rn)})`;
+}
+
+function divideByLinearExact(coeffs, p, q) {
+  // divide by (q x - p)
+  const c = trimLeadingZeros(coeffs);
+  const n = c.length - 1;
+  if (n < 1) return null;
+
+  const quotient = new Array(n);
+  quotient[0] = c[0] / q;
+  if (!Number.isInteger(quotient[0])) return null;
+
+  for (let i = 1; i < n; i++) {
+    const val = (c[i] + p * quotient[i - 1]) / q;
+    if (!Number.isInteger(val)) return null;
+    quotient[i] = val;
+  }
+
+  const remainder = c[n] + p * quotient[n - 1];
+  if (remainder !== 0) return null;
+
+  return trimLeadingZeros(quotient);
+}
+
+function dividePolynomialsExact(dividend, divisor) {
+  let rem = trimLeadingZeros(dividend).slice();
+  const div = trimLeadingZeros(divisor).slice();
+
+  if (div.length === 1 && div[0] === 0) {
+    throw new Error("0으로 나눌 수 없습니다.");
+  }
+
+  const n = rem.length - 1;
+  const m = div.length - 1;
+  if (n < m) return null;
+
+  const q = new Array(n - m + 1).fill(0);
+
+  while (rem.length >= div.length && !(rem.length === 1 && rem[0] === 0)) {
+    const shift = rem.length - div.length;
+    const leadRem = rem[0];
+    const leadDiv = div[0];
+
+    if (leadRem % leadDiv !== 0) return null;
+
+    const factor = leadRem / leadDiv;
+    q[shift] = factor;
+
+    const sub = div.map(v => v * factor).concat(new Array(shift).fill(0));
+
+    for (let i = 0; i < rem.length; i++) {
+      rem[i] -= sub[i];
+    }
+    rem = trimLeadingZeros(rem);
+  }
+
+  if (!(rem.length === 1 && rem[0] === 0)) return null;
+
+  return trimLeadingZeros(q.reverse());
+}
+
+function factorQuadraticOverQ(coeffs) {
+  const c = trimLeadingZeros(coeffs);
+  if (c.length !== 3) return null;
+
+  const [a, b, d] = c;
+  const D = b * b - 4 * a * d;
+  if (D < 0) return null;
+
+  const s = Math.round(Math.sqrt(D));
+  if (s * s !== D) return null;
+
+  const r1 = reduceFraction(-b + s, 2 * a);
+  const r2 = reduceFraction(-b - s, 2 * a);
+  return [r1, r2];
+}
+
+function factorCandidateToString(coeffs) {
+  return `(${polyToString(coeffs)})`;
+}
+
+function integerRange(min, max) {
+  const arr = [];
+  for (let i = min; i <= max; i++) arr.push(i);
+  return arr;
+}
+
+function getMonicFactorCandidates(poly, deg) {
+  const c = trimLeadingZeros(poly);
+  const constant = c[c.length - 1];
+  const constDivs = constant === 0 ? [0] : divisors(constant);
+  const signedConsts = [...new Set(constDivs.flatMap(v => [v, -v]))];
+
+  const candidates = [];
+
+  if (deg === 2) {
+    for (const a of integerRange(-20, 20)) {
+      for (const b of signedConsts) {
+        candidates.push([1, a, b]);
+      }
+    }
+  }
+
+  if (deg === 3) {
+    for (const a of integerRange(-20, 20)) {
+      for (const b of integerRange(-20, 20)) {
+        for (const d of signedConsts) {
+          candidates.push([1, a, b, d]);
+        }
+      }
+    }
+  }
+
+  return candidates;
+}
+
+function tryFindNonlinearFactor(poly, maxFactorDegree = 3) {
+  const c = trimLeadingZeros(poly);
+  if (c[0] !== 1) return null;
+
+  for (let deg = 2; deg <= Math.min(maxFactorDegree, c.length - 2); deg++) {
+    const candidates = getMonicFactorCandidates(c, deg);
+
+    for (const cand of candidates) {
+      const quotient = dividePolynomialsExact(c, cand);
+      if (quotient) {
+        return {
+          factor: cand,
+          quotient
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 function factorPolynomial(coeffs) {
-  let steps = [];
-  let factors = [];
+  const steps = [];
+  const factors = [];
 
   let { content, coeffs: poly } = primitiveNormalize(coeffs);
 
@@ -348,57 +378,81 @@ function factorPolynomial(coeffs) {
 
   if (Math.abs(content) !== 1) {
     factors.push(`${content}`);
-    steps.push(`계수들의 최대공약수(content) ${content} 를 먼저 분리했습니다.`);
+    steps.push(`계수들의 최대공약수 ${content} 를 분리했습니다.`);
   }
 
   while (poly.length > 1 && poly[poly.length - 1] === 0) {
     factors.push("x");
-    poly.pop();
-    steps.push(`상수항이 0이므로 x 를 인수로 뽑았습니다.`);
+    poly = poly.slice(0, -1);
+    steps.push("상수항이 0이므로 x 를 인수로 뽑았습니다.");
   }
 
-  while (poly.length > 1) {
-    const candidates = candidateRationalRoots(poly);
-    let found = false;
+  let changed = true;
+  while (changed && poly.length > 1) {
+    changed = false;
 
-    for (const [p, q] of candidates) {
-      if (!isRoot(poly, p, q)) continue;
+    // 1. rational linear factors
+    const roots = candidateRationalRoots(poly);
+    for (const [p, q] of roots) {
+      const [num] = evalPolyRational(poly, p, q);
+      if (num !== 0) continue;
 
-      const division = divideByLinearExact(poly, p, q);
-      if (!division) continue;
+      const quotient = divideByLinearExact(poly, p, q);
+      if (!quotient) continue;
 
       factors.push(linearFactorStringFromRoot(p, q));
-      steps.push(
-        `유리근 ${fractionToString(p, q)} 를 찾았으므로 ${linearFactorStringFromRoot(p, q)} 를 인수로 뽑았습니다.`
-      );
-
-      poly = division.quotient;
-      found = true;
+      steps.push(`유리근 ${fractionToString(p, q)} 를 찾아 ${linearFactorStringFromRoot(p, q)} 를 인수로 뽑았습니다.`);
+      poly = quotient;
+      changed = true;
       break;
     }
+    if (changed) continue;
 
-    if (!found) break;
+    // 2. quadratic directly
+    if (poly.length === 3) {
+      const quad = factorQuadraticOverQ(poly);
+      if (quad) {
+        const [r1, r2] = quad;
+        factors.push(linearFactorStringFromRoot(r1[0], r1[1]));
+        factors.push(linearFactorStringFromRoot(r2[0], r2[1]));
+        steps.push("남은 2차식의 판별식이 완전제곱수이므로 1차식 둘로 분해했습니다.");
+        poly = [1];
+        changed = true;
+        break;
+      }
+    }
+
+    // 3. monic quadratic/cubic factor search
+    const nonlinear = tryFindNonlinearFactor(poly, 3);
+    if (nonlinear) {
+      factors.push(factorCandidateToString(nonlinear.factor));
+      steps.push(`선형인수가 없어서 작은 차수의 monic 인수 후보를 검사했고 ${factorCandidateToString(nonlinear.factor)} 를 찾았습니다.`);
+      poly = nonlinear.quotient;
+      changed = true;
+    }
   }
 
-  if (poly.length === 1) {
-    if (poly[0] !== 1) factors.push(`${poly[0]}`);
-  } else if (poly.length === 2) {
-    factors.push(`(${polyToString(poly)})`);
-    steps.push(`남은 다항식은 1차식이므로 종료했습니다.`);
-  } else if (poly.length === 3) {
-    const qf = factorQuadraticOverQ(poly);
-    if (qf) {
-      const [r1, r2] = qf;
-      factors.push(linearFactorStringFromRoot(r1[0], r1[1]));
-      factors.push(linearFactorStringFromRoot(r2[0], r2[1]));
-      steps.push(`남은 2차식의 판별식이 완전제곱수이므로 1차식 둘로 더 분해했습니다.`);
+  poly = trimLeadingZeros(poly);
+
+  if (!(poly.length === 1 && poly[0] === 1)) {
+    if (poly.length === 2) {
+      factors.push(`(${polyToString(poly)})`);
+      steps.push("남은 다항식은 1차식입니다.");
+    } else if (poly.length === 3) {
+      const quad = factorQuadraticOverQ(poly);
+      if (quad) {
+        const [r1, r2] = quad;
+        factors.push(linearFactorStringFromRoot(r1[0], r1[1]));
+        factors.push(linearFactorStringFromRoot(r2[0], r2[1]));
+        steps.push("마지막 2차식의 판별식이 완전제곱수라서 더 분해했습니다.");
+      } else {
+        factors.push(`(${polyToString(poly)})`);
+        steps.push("남은 2차식은 유리수 범위에서 기약입니다.");
+      }
     } else {
       factors.push(`(${polyToString(poly)})`);
-      steps.push(`남은 2차식은 유리수 범위에서 기약이므로 그대로 남겼습니다.`);
+      steps.push(`남은 ${poly.length - 1}차 다항식은 현재 탐색 범위에서는 더 분해하지 않았습니다.`);
     }
-  } else {
-    factors.push(`(${polyToString(poly)})`);
-    steps.push(`남은 ${poly.length - 1}차 다항식은 이 구현 범위에서는 더 분해하지 않았습니다.`);
   }
 
   return {
