@@ -1,23 +1,18 @@
 body {
-  background: #111;
-  color: white;
-  text-align: center;
-  font-family: sans-serif;
+  margin: 0;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
 #board {
-  background: #000;
-  border: 1px solid #555;
+  background: black;
 }
 
-.curve-f {
-  stroke: #4da6ff; /* 파란 곡선 */
+.board-line {
   fill: none;
-  stroke-width: 1.5;
-}
-
-.curve-g {
-  stroke: #66ff99; /* 초록 곡선 */
-  fill: none;
-  stroke-width: 1.5;
+  stroke: #4fd1ff;
+  stroke-width: 1.6;
 }
