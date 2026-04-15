@@ -11,11 +11,6 @@ import {
 } from "./rationalRootFactor.js";
 
 import {
-  factorByLLL,
-  fullFactorString
-} from "./lllFactor.js";
-
-import {
   squareFreeFactorization
 } from "./squareFreeFactor.js";
 
@@ -31,7 +26,7 @@ export function factorPowerSum(n) {
 
   let lll;
   if (deg >= 4) {
-    lll = factorByLLL(rat.remainingPoly);
+    const sqf = squareFreeFactorization(rat.remainingPoly);
   } else {
     lll = {
       scalar: new Fraction(1, 1),
