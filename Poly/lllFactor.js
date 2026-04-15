@@ -1,65 +1,38 @@
-// lllFactor.js
-// LLL-based reconstruction from a Hensel-lifted monic factor pair.
-//
-// Current scope:
-// - tries direct centered reconstruction first
-// - then uses an embedding lattice + LLL reduction
-// - searches short vectors with marker ±T
-// - tests exact divisibility in Z[x]
-//
-// Important assumption:
-//   This first version is intended for blocks where the target factor can be
-//   reconstructed as a monic integer polynomial from the lifted monic factor.
-//
-// coeffs[i] = coefficient of x^i
+// main.js
 
-import { polyTrimInt } from "./powerSumCore.js";
+import {
+  buildPowerSumPrimitive,
+  Fraction,
+  polyTrimInt,
+  polyToStringInt
+} from "./powerSumCore.js";
 
-// ============================================================
-// basic integer helpers
-// ============================================================
+import {
+  extractRationalLinearFactors
+} from "./rationalRootFactor.js";
 
-function abs(n) {
-  return Math.abs(n);
-}
+import {
+  squareFreeFactorization
+} from "./squareFreeFactor.js";
 
-function gcd(a, b) {
-  a = abs(a);
-  b = abs(b);
-  while (b !== 0) [a, b] = [b, a % b];
-  return a;
-}
+import {
+  factorModP
+} from "./modPFactor.js";
 
-function mod(n, m) {
-  const r = n % m;
-  return r < 0 ? r + m : r;
-}
+import {
+  henselLiftFromSplit
+} from "./henselLift.js";
 
-function gcdArray(arr) {
-  let g = 0;
-  for (const x of arr) g = gcd(g, x);
-  return g;
-}
-
-// centered representative in (-m/2, m/2]
-function centerMod(a, m) {
-  let r = mod(a, m);
-  if (r > m / 2) r -= m;
-  return r;
-}
+import {
+  factorByLLL
+} from "./lllFactor.js";
 
 // ============================================================
-// integer polynomial helpers
-// coeffs[i] = x^i coefficient
+// basic helpers
 // ============================================================
 
 function polyDegreeInt(poly) {
   return polyTrimInt(poly).length - 1;
-}
-
-function polyIsZeroInt(poly) {
-  poly = polyTrimInt(poly);
-  return poly.length === 1 && poly[0] === 0;
 }
 
 function polyLeadingInt(poly) {
@@ -67,66 +40,9 @@ function polyLeadingInt(poly) {
   return poly[poly.length - 1];
 }
 
-function polyClone(poly) {
-  return poly.slice();
-}
-
-function polyNeg(poly) {
-  return poly.map(c => -c);
-}
-
-function polyAddInt(a, b) {
-  const n = Math.max(a.length, b.length);
-  const out = Array(n).fill(0);
-  for (let i = 0; i < n; i++) {
-    out[i] = (a[i] || 0) + (b[i] || 0);
-  }
-  return polyTrimInt(out);
-}
-
-function polySubInt(a, b) {
-  const n = Math.max(a.length, b.length);
-  const out = Array(n).fill(0);
-  for (let i = 0; i < n; i++) {
-    out[i] = (a[i] || 0) - (b[i] || 0);
-  }
-  return polyTrimInt(out);
-}
-
-function polyScaleInt(poly, k) {
-  return polyTrimInt(poly.map(c => c * k));
-}
-
-function polyMulInt(a, b) {
-  const out = Array(a.length + b.length - 1).fill(0);
-  for (let i = 0; i < a.length; i++) {
-    for (let j = 0; j < b.length; j++) {
-      out[i + j] += a[i] * b[j];
-    }
-  }
-  return polyTrimInt(out);
-}
-
-function polyContent(poly) {
+function polyIsOne(poly) {
   poly = polyTrimInt(poly);
-  const nz = poly.filter(v => v !== 0);
-  if (nz.length === 0) return 0;
-  return gcdArray(nz);
-}
-
-function polyPrimitivePart(poly) {
-  poly = polyTrimInt(poly);
-  if (polyIsZeroInt(poly)) return [0];
-
-  const c = polyContent(poly);
-  let out = poly.map(v => v / c);
-  out = polyTrimInt(out);
-
-  if (polyLeadingInt(out) < 0) {
-    out = out.map(v => -v);
-  }
-
-  return out;
+  return poly.length === 1 && poly[0] === 1;
 }
 
 function polyEqual(a, b) {
@@ -139,518 +55,281 @@ function polyEqual(a, b) {
   return true;
 }
 
-// exact long division by monic divisor in Z[x]
-function polyDivmodMonicInt(A, B) {
-  A = polyTrimInt(A);
-  B = polyTrimInt(B);
-
-  if (polyIsZeroInt(B)) {
-    throw new Error("Division by zero polynomial");
-  }
-  if (polyLeadingInt(B) !== 1) {
-    throw new Error("polyDivmodMonicInt requires monic divisor");
-  }
-
-  const degA = polyDegreeInt(A);
-  const degB = polyDegreeInt(B);
-
-  if (degA < degB) {
-    return { q: [0], r: A };
-  }
-
-  const r = A.slice();
-  const q = Array(degA - degB + 1).fill(0);
-
-  for (let k = degA - degB; k >= 0; k--) {
-    const coeff = r[degB + k];
-    q[k] = coeff;
-
-    if (coeff !== 0) {
-      for (let j = 0; j <= degB; j++) {
-        r[j + k] -= coeff * B[j];
-      }
-    }
-  }
-
-  return {
-    q: polyTrimInt(q),
-    r: polyTrimInt(r)
-  };
+function gcd(a, b) {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b !== 0) [a, b] = [b, a % b];
+  return a;
 }
 
-function polyExactDivideMonicInt(dividend, divisor) {
-  const { q, r } = polyDivmodMonicInt(dividend, divisor);
-  if (!polyIsZeroInt(r)) return null;
-  return q;
+function gcdArray(arr) {
+  let g = 0;
+  for (const x of arr) g = gcd(g, x);
+  return g;
 }
 
-// ============================================================
-// vector helpers
-// ============================================================
-
-function dot(a, b) {
-  let s = 0;
-  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-  return s;
+function polyContent(poly) {
+  poly = polyTrimInt(poly);
+  const nz = poly.filter(v => v !== 0);
+  if (nz.length === 0) return 0;
+  return gcdArray(nz);
 }
 
-function scalarMulVec(v, k) {
-  return v.map(x => x * k);
-}
+function normalizeFactorPoly(poly) {
+  poly = polyTrimInt(poly);
+  if (poly.length === 1 && poly[0] === 0) return [0];
 
-function addVec(a, b) {
-  return a.map((x, i) => x + b[i]);
-}
+  const c = polyContent(poly);
+  let out = c > 1 ? poly.map(v => v / c) : poly.slice();
+  out = polyTrimInt(out);
 
-function subVec(a, b) {
-  return a.map((x, i) => x - b[i]);
-}
-
-function vecNorm2(v) {
-  return dot(v, v);
-}
-
-// ============================================================
-// Gram-Schmidt / LLL
-// ============================================================
-
-function gramSchmidt(B) {
-  const n = B.length;
-  const m = B[0].length;
-  const Bstar = Array(n).fill(null).map(() => Array(m).fill(0));
-  const mu = Array(n).fill(null).map(() => Array(n).fill(0));
-  const norm = Array(n).fill(0);
-
-  for (let i = 0; i < n; i++) {
-    let v = B[i].slice();
-
-    for (let j = 0; j < i; j++) {
-      mu[i][j] = dot(B[i], Bstar[j]) / norm[j];
-      v = subVec(v, scalarMulVec(Bstar[j], mu[i][j]));
-    }
-
-    Bstar[i] = v;
-    norm[i] = dot(v, v);
-  }
-
-  return { Bstar, mu, norm };
-}
-
-function lllReduce(basis, delta = 0.75) {
-  if (!basis.length) return [];
-  let B = basis.map(v => v.slice());
-  let k = 1;
-
-  while (k < B.length) {
-    let gs = gramSchmidt(B);
-
-    for (let j = k - 1; j >= 0; j--) {
-      const q = Math.round(gs.mu[k][j]);
-      if (q !== 0) {
-        B[k] = subVec(B[k], scalarMulVec(B[j], q));
-        gs = gramSchmidt(B);
-      }
-    }
-
-    const lhs = gs.norm[k];
-    const rhs = (delta - gs.mu[k][k - 1] * gs.mu[k][k - 1]) * gs.norm[k - 1];
-
-    if (lhs >= rhs) {
-      k++;
-    } else {
-      [B[k], B[k - 1]] = [B[k - 1], B[k]];
-      k = Math.max(1, k - 1);
-    }
-  }
-
-  B.sort((u, v) => vecNorm2(u) - vecNorm2(v));
-  return B;
-}
-
-// ============================================================
-// lattice construction
-//
-// We want vectors of the form:
-//
-//   candidate = A + M*z
-//
-// where A is the lifted factor (centered coefficients),
-// M is the Hensel modulus, z is integer.
-//
-// To make this affine congruence class into a lattice, use an embedding:
-//
-// rows:
-//   M*e_0
-//   M*e_1
-//   ...
-//   M*e_{d-1}
-//   [A_0, A_1, ..., A_d, T]
-//
-// Here A is monic of degree d, so we do not vary the leading coefficient.
-// The last coordinate is a marker.
-// Short vectors with marker ±T correspond to A + M*z.
-// ============================================================
-
-function centeredLiftedMonic(lifted, modulus) {
-  lifted = polyTrimInt(lifted);
-  const d = polyDegreeInt(lifted);
-
-  const out = Array(d + 1).fill(0);
-  for (let i = 0; i <= d; i++) {
-    out[i] = centerMod(lifted[i] || 0, modulus);
-  }
-
-  // enforce monic representative
-  out[d] = 1;
-  return polyTrimInt(out);
-}
-
-function defaultEmbeddingScale(centeredPoly, modulus) {
-  const coeffNorm = Math.sqrt(centeredPoly.reduce((s, c) => s + c * c, 0));
-  const t1 = Math.max(1, Math.round(coeffNorm));
-  const t2 = Math.max(1, Math.round(Math.sqrt(modulus)));
-  return Math.max(t1, t2);
-}
-
-function buildEmbeddedBasisFromLift(liftedFactor, modulus, embeddingScale = null) {
-  const A = centeredLiftedMonic(liftedFactor, modulus);
-  const d = polyDegreeInt(A);
-  const T = embeddingScale ?? defaultEmbeddingScale(A, modulus);
-
-  const dim = d + 2; // coeffs 0..d plus marker
-  const rows = [];
-
-  // M * e_i for i = 0..d-1 (keep leading coeff fixed)
-  for (let i = 0; i < d; i++) {
-    const row = Array(dim).fill(0);
-    row[i] = modulus;
-    rows.push(row);
-  }
-
-  // embedded lift row
-  const liftRow = Array(dim).fill(0);
-  for (let i = 0; i <= d; i++) {
-    liftRow[i] = A[i] || 0;
-  }
-  liftRow[dim - 1] = T;
-  rows.push(liftRow);
-
-  return {
-    centeredLift: A,
-    degree: d,
-    modulus,
-    embeddingScale: T,
-    basis: rows
-  };
-}
-
-// ============================================================
-// candidate recovery from embedded vector
-// ============================================================
-
-function vectorToCandidatePoly(v, degree, markerTarget) {
-  if (v.length !== degree + 2) return null;
-
-  let w = v.slice();
-  const marker = w[w.length - 1];
-
-  if (Math.abs(marker) !== markerTarget) return null;
-
-  if (marker < 0) {
-    w = w.map(x => -x);
-  }
-
-  const coeffs = w.slice(0, degree + 1);
-
-  // enforce monic
-  if (coeffs[degree] !== 1) return null;
-
-  return polyTrimInt(coeffs);
-}
-
-function isCongruentToLift(candidate, centeredLift, modulus) {
-  const d = polyDegreeInt(centeredLift);
-  if (polyDegreeInt(candidate) !== d) return false;
-  for (let i = 0; i <= d; i++) {
-    if (mod(candidate[i] - centeredLift[i], modulus) !== 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// ============================================================
-// search small combinations of reduced basis rows
-// ============================================================
-
-function enumerateSmallCombinations(vectors, radius = 1) {
-  const coeffSet = [];
-  for (let c = -radius; c <= radius; c++) coeffSet.push(c);
-
-  const out = [];
-  const n = vectors.length;
-  if (n === 0) return out;
-
-  const dim = vectors[0].length;
-
-  function dfs(i, cur, used) {
-    if (i === n) {
-      if (used) out.push(cur.slice());
-      return;
-    }
-
-    for (const c of coeffSet) {
-      if (c === 0) {
-        dfs(i + 1, cur, used);
-      } else {
-        const next = cur.slice();
-        for (let j = 0; j < dim; j++) {
-          next[j] += c * vectors[i][j];
-        }
-        dfs(i + 1, next, true);
-      }
-    }
-  }
-
-  dfs(0, Array(dim).fill(0), false);
-  out.sort((a, b) => vecNorm2(a) - vecNorm2(b));
+  if (polyLeadingInt(out) < 0) out = out.map(v => -v);
   return out;
 }
 
-// ============================================================
-// exact divisor test
-// ============================================================
+function addFactor(factors, poly, power = 1) {
+  poly = normalizeFactorPoly(poly);
+  const key = JSON.stringify(poly);
 
-function tryExactFactor(originalPoly, candidateMonic) {
-  candidateMonic = polyTrimInt(candidateMonic);
-  if (polyLeadingInt(candidateMonic) !== 1) return null;
+  for (const f of factors) {
+    if (f.key === key) {
+      f.power += power;
+      return;
+    }
+  }
 
-  const quotient = polyExactDivideMonicInt(originalPoly, candidateMonic);
-  if (!quotient) return null;
+  factors.push({
+    key,
+    poly,
+    power
+  });
+}
 
-  return {
-    factor: candidateMonic,
-    cofactor: quotient
-  };
+function factorsToString(baseScalar, factors) {
+  const parts = [];
+
+  if (!(baseScalar.n === 1 && baseScalar.d === 1)) {
+    parts.push(baseScalar.toString());
+  }
+
+  for (const f of factors) {
+    const p = `(${polyToStringInt(f.poly)})`;
+    parts.push(f.power === 1 ? p : `${p}^${f.power}`);
+  }
+
+  return parts.length ? parts.join(" * ") : "1";
 }
 
 // ============================================================
-// reconstruct from one lifted side
+// prime / bound / subset helpers
 // ============================================================
 
-function reconstructFromOneLift({
-  originalPoly,
-  liftedFactor,
-  modulus,
-  embeddingScale = null,
-  maxCombinationRows = 6,
-  combinationRadius = 1,
-  directFirst = true
-}) {
-  const F = polyTrimInt(originalPoly);
-  const lattice = buildEmbeddedBasisFromLift(liftedFactor, modulus, embeddingScale);
-  const { centeredLift, degree, embeddingScale: T, basis } = lattice;
+const SMALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
 
-  // 1) direct centered candidate
-  if (directFirst) {
-    const direct = tryExactFactor(F, centeredLift);
-    if (direct) {
-      return {
-        success: true,
-        method: "direct_centered_lift",
-        candidate: direct.factor,
-        cofactor: direct.cofactor,
-        lattice
-      };
+function choosePrimeForModFactor(poly) {
+  const deg = polyDegreeInt(poly);
+  if (deg < 2) return null;
+
+  for (const p of SMALL_PRIMES) {
+    // if leading coefficient vanishes mod p, degree may collapse
+    if (((polyLeadingInt(poly) % p) + p) % p === 0) continue;
+
+    let modp;
+    try {
+      modp = factorModP(poly, p);
+    } catch {
+      continue;
+    }
+
+    if (!modp.squareFree) continue;
+    if (!modp.factors || modp.factors.length < 2) continue;
+
+    return modp;
+  }
+
+  return null;
+}
+
+// crude integer coefficient bound; enough for first-pass Hensel/LLL
+function reconstructionBound(poly) {
+  poly = polyTrimInt(poly);
+  const deg = polyDegreeInt(poly);
+  const infNorm = Math.max(...poly.map(c => Math.abs(c)));
+  return Math.max(2, Math.pow(2, deg) * infNorm);
+}
+
+function requiredLiftExponent(poly, p) {
+  const B = reconstructionBound(poly);
+  const target = 2 * B + 1;
+
+  let e = 1;
+  let m = p;
+  while (m <= target && e < 12) {
+    m *= p;
+    e++;
+  }
+  return e;
+}
+
+function enumerateSubsetChoices(numFactors) {
+  const choices = [];
+  if (numFactors < 2) return choices;
+
+  // fix index 0 on the left to avoid duplicate complements
+  const free = numFactors - 1;
+  const maxMask = 1 << free;
+
+  for (let mask = 0; mask < maxMask; mask++) {
+    const left = [0];
+    for (let j = 0; j < free; j++) {
+      if (mask & (1 << j)) left.push(j + 1);
+    }
+    if (left.length === numFactors) continue;
+    choices.push(left);
+  }
+
+  return choices;
+}
+
+// ============================================================
+// recursive factorization of a square-free primitive polynomial
+// over Q, using mod p -> Hensel -> LLL
+// ============================================================
+
+function factorSquareFreePrimitive(poly, notes, depth = 0) {
+  poly = normalizeFactorPoly(poly);
+  const deg = polyDegreeInt(poly);
+
+  if (deg <= 3) {
+    notes.push(`deg ${deg}: stop (irreducible over Q after rational-root removal)`);
+    return [poly];
+  }
+
+  const modp = choosePrimeForModFactor(poly);
+  if (!modp) {
+    notes.push(`deg ${deg}: no suitable small prime found; leaving as unresolved factor`);
+    return [poly];
+  }
+
+  notes.push(
+    `deg ${deg}: chose p=${modp.p}, mod-p factors=${modp.factors
+      .map(f => `(${polyToStringInt(f.poly)})`)
+      .join(" * ")}`
+  );
+
+  const targetExponent = requiredLiftExponent(poly, modp.p);
+  const subsetChoices = enumerateSubsetChoices(modp.factors.length);
+
+  for (const leftIndices of subsetChoices) {
+    let lifted;
+    try {
+      lifted = henselLiftFromSplit({
+        poly,
+        p: modp.p,
+        modPFactors: modp.factors,
+        leftIndices,
+        targetExponent
+      });
+    } catch {
+      continue;
+    }
+
+    const lll = factorByLLL({
+      originalPoly: poly,
+      liftedA: lifted.liftedA,
+      liftedB: lifted.liftedB,
+      modulus: lifted.modulus
+    });
+
+    if (!lll.factors || lll.factors.length < 2) continue;
+
+    const f1 = normalizeFactorPoly(lll.factors[0].poly);
+    const f2 = normalizeFactorPoly(lll.factors[1].poly);
+
+    if (polyDegreeInt(f1) <= 0 || polyDegreeInt(f2) <= 0) continue;
+    if (polyEqual(f1, poly) || polyEqual(f2, poly)) continue;
+
+    notes.push(
+      `deg ${deg}: LLL success with split [${leftIndices.join(",")}], recovered ` +
+      `(${polyToStringInt(f1)}) * (${polyToStringInt(f2)})`
+    );
+
+    const leftParts = factorSquareFreePrimitive(f1, notes, depth + 1);
+    const rightParts = factorSquareFreePrimitive(f2, notes, depth + 1);
+    return [...leftParts, ...rightParts];
+  }
+
+  notes.push(`deg ${deg}: Hensel+LLL could not split; leaving as unresolved factor`);
+  return [poly];
+}
+
+// ============================================================
+// full factorization over Q for primitive integer polynomial
+// assumes rational linear factors already removed
+// ============================================================
+
+function factorRemainingPrimitive(poly, notes) {
+  poly = normalizeFactorPoly(poly);
+
+  if (polyIsOne(poly)) return [];
+
+  const sqf = squareFreeFactorization(poly);
+  notes.push(
+    `square-free decomposition: ` +
+    sqf.factors.map(f => `(${polyToStringInt(f.poly)})^${f.power}`).join(" * ")
+  );
+
+  const out = [];
+
+  for (const part of sqf.factors) {
+    const primitivePart = normalizeFactorPoly(part.poly);
+    const pieces = factorSquareFreePrimitive(primitivePart, notes);
+
+    for (const piece of pieces) {
+      addFactor(out, piece, part.power);
     }
   }
 
-  // 2) LLL basis reduction
-  const reduced = lllReduce(basis);
-
-  // 3) try reduced basis vectors themselves
-  for (const row of reduced) {
-    const cand = vectorToCandidatePoly(row, degree, T);
-    if (!cand) continue;
-    if (!isCongruentToLift(cand, centeredLift, modulus)) continue;
-
-    const exact = tryExactFactor(F, cand);
-    if (exact) {
-      return {
-        success: true,
-        method: "lll_basis_vector",
-        candidate: exact.factor,
-        cofactor: exact.cofactor,
-        lattice,
-        reducedBasis: reduced
-      };
-    }
-  }
-
-  // 4) try small combinations of short reduced vectors
-  const searchRows = reduced.slice(0, Math.min(maxCombinationRows, reduced.length));
-  const combos = enumerateSmallCombinations(searchRows, combinationRadius);
-
-  for (const v of combos) {
-    const cand = vectorToCandidatePoly(v, degree, T);
-    if (!cand) continue;
-    if (!isCongruentToLift(cand, centeredLift, modulus)) continue;
-
-    const exact = tryExactFactor(F, cand);
-    if (exact) {
-      return {
-        success: true,
-        method: "lll_small_combination",
-        candidate: exact.factor,
-        cofactor: exact.cofactor,
-        lattice,
-        reducedBasis: reduced
-      };
-    }
-  }
-
-  return {
-    success: false,
-    method: "failed",
-    lattice,
-    reducedBasis: reduced
-  };
+  return out;
 }
 
 // ============================================================
 // public API
-// tries liftedA first, then liftedB
 // ============================================================
 
-export function factorByLLL({
-  originalPoly,
-  liftedA,
-  liftedB = null,
-  modulus,
-  embeddingScale = null,
-  maxCombinationRows = 6,
-  combinationRadius = 1
-}) {
-  const F = polyTrimInt(originalPoly);
+export function factorPowerSum(n) {
+  const core = buildPowerSumPrimitive(n);
+  const rat = extractRationalLinearFactors(core.primitivePoly);
 
-  const tries = [];
+  const notes = [];
+  const finalFactors = [];
 
-  if (liftedA) {
-    const resA = reconstructFromOneLift({
-      originalPoly: F,
-      liftedFactor: liftedA,
-      modulus,
-      embeddingScale,
-      maxCombinationRows,
-      combinationRadius
-    });
-    tries.push({ side: "A", result: resA });
-
-    if (resA.success) {
-      return {
-        scalar: { n: 1, d: 1, toString() { return "1"; }, mul(o) { return o; } },
-        factors: [
-          { poly: resA.candidate, power: 1 },
-          { poly: resA.cofactor, power: 1 }
-        ],
-        remainingPoly: [1],
-        note: `LLL reconstruction succeeded from liftedA (${resA.method})`,
-        debug: tries
-      };
-    }
+  for (const rf of rat.factors) {
+    addFactor(finalFactors, rf.poly, rf.power);
   }
 
-  if (liftedB) {
-    const resB = reconstructFromOneLift({
-      originalPoly: F,
-      liftedFactor: liftedB,
-      modulus,
-      embeddingScale,
-      maxCombinationRows,
-      combinationRadius
-    });
-    tries.push({ side: "B", result: resB });
+  const remaining = normalizeFactorPoly(rat.remainingPoly);
 
-    if (resB.success) {
-      return {
-        scalar: { n: 1, d: 1, toString() { return "1"; }, mul(o) { return o; } },
-        factors: [
-          { poly: resB.candidate, power: 1 },
-          { poly: resB.cofactor, power: 1 }
-        ],
-        remainingPoly: [1],
-        note: `LLL reconstruction succeeded from liftedB (${resB.method})`,
-        debug: tries
-      };
+  if (!polyIsOne(remaining)) {
+    const advancedFactors = factorRemainingPrimitive(remaining, notes);
+    for (const f of advancedFactors) {
+      addFactor(finalFactors, f.poly, f.power);
     }
   }
 
   return {
-    scalar: { n: 1, d: 1, toString() { return "1"; }, mul(o) { return o; } },
-    factors: [],
-    remainingPoly: F,
-    note: "LLL reconstruction failed for both lifted sides",
-    debug: tries
+    n,
+    rationalPoly: core.rationalPoly,
+    rationalPolyString: core.rationalPolyString,
+    scalar: core.scalar,
+    primitivePoly: core.primitivePoly,
+    primitivePolyString: core.primitivePolyString,
+    rationalFactors: rat.factors,
+    remainingAfterRational: rat.remainingPoly,
+    factors: finalFactors.map(({ poly, power }) => ({ poly, power })),
+    notes,
+    factorString: factorsToString(core.scalar, finalFactors)
   };
 }
 
-// ============================================================
-// helper for formatting if you want to reuse old style
-// ============================================================
-
-export function polyToStringInt(poly, variable = "x") {
-  poly = polyTrimInt(poly);
-  const terms = [];
-
-  for (let deg = poly.length - 1; deg >= 0; deg--) {
-    const c = poly[deg];
-    if (c === 0) continue;
-
-    const sign = c < 0 ? "-" : "+";
-    const absC = Math.abs(c);
-
-    let core;
-    if (deg === 0) {
-      core = `${absC}`;
-    } else {
-      const coeffStr = absC === 1 ? "" : `${absC}`;
-      core = deg === 1 ? `${coeffStr}${variable}` : `${coeffStr}${variable}^${deg}`;
-    }
-
-    terms.push({ sign, core });
-  }
-
-  if (terms.length === 0) return "0";
-
-  let out = "";
-  for (let i = 0; i < terms.length; i++) {
-    const t = terms[i];
-    out += i === 0
-      ? (t.sign === "-" ? "-" : "") + t.core
-      : ` ${t.sign} ${t.core}`;
-  }
-  return out;
-}
-
-// ============================================================
-// debug exports
-// ============================================================
-
-export const __debug = {
-  mod,
-  centerMod,
-  polyAddInt,
-  polySubInt,
-  polyScaleInt,
-  polyMulInt,
-  polyPrimitivePart,
-  polyDivmodMonicInt,
-  gramSchmidt,
-  lllReduce,
-  centeredLiftedMonic,
-  buildEmbeddedBasisFromLift,
-  vectorToCandidatePoly,
-  isCongruentToLift,
-  enumerateSmallCombinations,
-  reconstructFromOneLift
-};
+window.factorPowerSum = factorPowerSum;
