@@ -15,6 +15,10 @@ import {
   fullFactorString
 } from "./lllFactor.js";
 
+import {
+  squareFreeFactorization
+} from "./squareFreeFactor.js";
+
 function polyDegreeInt(coeffs) {
   return polyTrimInt(coeffs).length - 1;
 }
