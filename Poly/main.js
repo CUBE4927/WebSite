@@ -1,6 +1,19 @@
-import { buildPowerSumPrimitive, polyTrimInt } from "./powerSumCore.js";
-import { extractRationalLinearFactors } from "./rationalRootFactor.js";
-import { factorByLLL, fullFactorString } from "./lllFactor.js";
+// main.js
+
+import {
+  buildPowerSumPrimitive,
+  Fraction,
+  polyTrimInt
+} from "./powerSumCore.js";
+
+import {
+  extractRationalLinearFactors
+} from "./rationalRootFactor.js";
+
+import {
+  factorByLLL,
+  fullFactorString
+} from "./lllFactor.js";
 
 function polyDegreeInt(coeffs) {
   return polyTrimInt(coeffs).length - 1;
@@ -17,7 +30,7 @@ export function factorPowerSum(n) {
     lll = factorByLLL(rat.remainingPoly);
   } else {
     lll = {
-      scalar: { n: 1, d: 1, mul(o) { return o; } }, // 이건 아래처럼 Fraction 쓰는 게 더 좋음
+      scalar: new Fraction(1, 1),
       factors: [],
       remainingPoly: rat.remainingPoly,
       note: "degree <= 3, irreducible over Q after rational-root removal"
@@ -37,3 +50,5 @@ export function factorPowerSum(n) {
     factorString: fullFactorString(core.scalar, rat.factors, lll)
   };
 }
+
+window.factorPowerSum = factorPowerSum;
