@@ -279,11 +279,16 @@
         for (const [u, v] of ordered) {
           const ei = edgeIndexMap.get(edgeKey(u, v));
           const edgePoint = E[ei];
-          const vertexPoint = V[u];
+          const vertexPointU = V[u];
+          const vertexPointV = V[v];
 
           positions.push(facePoint.x, facePoint.y, facePoint.z);
           positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
-          positions.push(vertexPoint.x, vertexPoint.y, vertexPoint.z);
+          positions.push(vertexPointU.x, vertexPointU.y, vertexPointU.z);
+
+          positions.push(facePoint.x, facePoint.y, facePoint.z);
+          positions.push(vertexPointV.x, vertexPointV.y, vertexPointV.z);
+          positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
         }
       }
 
