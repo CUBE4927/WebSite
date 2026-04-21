@@ -113,26 +113,54 @@
 
       <div class="row">
         <span>면 중심(20개, 3겹 대칭축)</span>
-        <span id="rfLabel">0.880</span>
-        <input id="rf" type="range" min="0.4" max="1.6" step="0.001" value="0.880" />
+        <span id="rfLabel">0.938</span>
+        <input id="rf" type="range" min="0.4" max="1.6" step="0.001" value="0.938" />
       </div>
 
       <div class="row">
         <span>모서리 중심(30개, 2겹 대칭축)</span>
-        <span id="reLabel">0.848</span>
-        <input id="re" type="range" min="0.4" max="1.6" step="0.001" value="0.848" />
+        <span id="reLabel">0.921</span>
+        <input id="re" type="range" min="0.4" max="1.6" step="0.001" value="0.921" />
       </div>
 
       <div class="buttons">
         <button id="toggleWire">와이어프레임 토글</button>
         <button id="toggleAuto">자동 회전 토글</button>
         <button id="reset">초기값 복원</button>
+        <button id="clearColors">색 초기화</button>
+      </div>
+
+      <div class="row">
+        <span>현재 선택 면</span>
+        <span id="selectedFaceLabel">없음</span>
+      </div>
+
+      <div class="row">
+        <span>팔레트</span>
+        <span id="currentColorLabel">#ff9999</span>
+      </div>
+      <div id="palette" style="display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;margin:8px 0 12px;"></div>
+
+      <div class="row">
+        <label for="presetName">프리셋 이름</label>
+        <input id="presetName" type="text" placeholder="preset name" style="grid-column:2; background:#17212e;color:#e8eef5;border:1px solid #2b3a4f;border-radius:8px;padding:6px 8px;" />
+      </div>
+      <div class="buttons">
+        <button id="savePreset">프리셋 저장</button>
+        <button id="loadPreset">불러오기</button>
+        <button id="deletePreset">삭제</button>
+      </div>
+      <div class="row">
+        <label for="presetSelect">저장된 프리셋</label>
+        <select id="presetSelect" style="grid-column:2; background:#17212e;color:#e8eef5;border:1px solid #2b3a4f;border-radius:8px;padding:6px 8px;">
+          <option value="">(없음)</option>
+        </select>
       </div>
 
       <div class="small">
         이 버전은 정이십면체의 꼭짓점·모서리 중심·면 중심을 이용해
         <b>Disdyakis triacontahedron의 조합적 구조</b>를 재구성한 시각화입니다.
-        기본값은 널리 쓰이는 비율에 가깝게 맞춰 두었습니다.
+        기본값은 현재 exact 비율 근사값으로 맞춰 두었습니다.
       </div>
     </div>
   </div>
@@ -158,29 +186,25 @@
     controls.enableDamping = true;
     controls.autoRotate = false;
     controls.autoRotateSpeed = 1.2;
+    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
+    camera.add(ambient);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
-    scene.add(ambient);
+    const dir1 = new THREE.DirectionalLight(0xffffff, 1.35);
+    dir1.position.set(3.5, 2.5, 6);
+    camera.add(dir1);
 
-    const dir1 = new THREE.DirectionalLight(0xffffff, 1.25);
-    dir1.position.set(4, 3, 5);
-    scene.add(dir1);
+    const dir2 = new THREE.DirectionalLight(0xdde8ff, 0.7);
+    dir2.position.set(-2.5, -1.5, 4);
+    camera.add(dir2);
 
-    const dir2 = new THREE.DirectionalLight(0x99bbff, 0.75);
-    dir2.position.set(-4, -2, -3);
-    scene.add(dir2);
+    scene.add(camera);
 
     const root = new THREE.Group();
     scene.add(root);
 
-    const solidMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x7fb5ff,
-      metalness: 0.05,
-      roughness: 0.25,
-      transmission: 0.0,
+    const solidMaterial = new THREE.MeshLambertMaterial({
       side: THREE.DoubleSide,
-      flatShading: true,
-      clearcoat: 0.25,
+      vertexColors: true,
     });
 
     const wireMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 });
@@ -193,6 +217,12 @@
     let solidMesh = null;
     let wireframe = null;
     let pointCloud = null;
+    let pickMesh = null;
+    let currentGeometry = null;
+    let faceCount = 120;
+    let selectedFace = -1;
+    let currentColorIndex = 0;
+    let faceColorIndices = [];
 
     const phi = (1 + Math.sqrt(5)) / 2;
 
@@ -265,6 +295,12 @@
       const E = edges.map(e => e.midpoint.clone().multiplyScalar(re));
 
       const positions = [];
+      const colors = [];
+      const pickPositions = [];
+
+      const paletteColors = paletteHex.map(hex => new THREE.Color(hex));
+      const defaultColor = new THREE.Color(0x7fb5ff);
+      let triangleIndex = 0;
 
       for (let fi = 0; fi < icoFaces.length; fi++) {
         const [a, b, c] = icoFaces[fi];
@@ -282,25 +318,47 @@
           const vertexPointU = V[u];
           const vertexPointV = V[v];
 
+          const ciA = faceColorIndices[triangleIndex] ?? -1;
+          const colA = ciA >= 0 ? paletteColors[ciA] : defaultColor;
+
           positions.push(facePoint.x, facePoint.y, facePoint.z);
           positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
           positions.push(vertexPointU.x, vertexPointU.y, vertexPointU.z);
+          for (let k = 0; k < 3; k++) colors.push(colA.r, colA.g, colA.b);
+          pickPositions.push(facePoint.x, facePoint.y, facePoint.z);
+          pickPositions.push(edgePoint.x, edgePoint.y, edgePoint.z);
+          pickPositions.push(vertexPointU.x, vertexPointU.y, vertexPointU.z);
+          triangleIndex++;
+
+          const ciB = faceColorIndices[triangleIndex] ?? -1;
+          const colB = ciB >= 0 ? paletteColors[ciB] : defaultColor;
 
           positions.push(facePoint.x, facePoint.y, facePoint.z);
           positions.push(vertexPointV.x, vertexPointV.y, vertexPointV.z);
           positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
+          for (let k = 0; k < 3; k++) colors.push(colB.r, colB.g, colB.b);
+          pickPositions.push(facePoint.x, facePoint.y, facePoint.z);
+          pickPositions.push(vertexPointV.x, vertexPointV.y, vertexPointV.z);
+          pickPositions.push(edgePoint.x, edgePoint.y, edgePoint.z);
+          triangleIndex++;
         }
       }
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geometry.computeVertexNormals();
-      return { geometry, V, F, E };
+
+      const pickGeometry = new THREE.BufferGeometry();
+      pickGeometry.setAttribute('position', new THREE.Float32BufferAttribute(pickPositions, 3));
+      pickGeometry.computeVertexNormals();
+
+      return { geometry, pickGeometry, V, F, E };
     }
 
     function buildPoints(V, F, E) {
       const group = new THREE.Group();
-      const sphereGeo = new THREE.SphereGeometry(0.025, 16, 16);
+      const sphereGeo = new THREE.SphereGeometry(0.018, 16, 16);
 
       for (const p of V) {
         const m = new THREE.Mesh(sphereGeo, pointMaterials.v);
@@ -340,10 +398,18 @@
       if (pointCloud) {
         root.remove(pointCloud);
       }
+      if (pickMesh) {
+        root.remove(pickMesh);
+        pickMesh.geometry.dispose();
+      }
 
-      const { geometry, V, F, E } = buildGeometry(rv, rf, re);
+      const { geometry, pickGeometry, V, F, E } = buildGeometry(rv, rf, re);
+      currentGeometry = geometry;
       solidMesh = new THREE.Mesh(geometry, solidMaterial);
       root.add(solidMesh);
+
+      pickMesh = new THREE.Mesh(pickGeometry, new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
+      root.add(pickMesh);
 
       const wireGeo = new THREE.EdgesGeometry(geometry, 1e-6);
       wireframe = new THREE.LineSegments(wireGeo, wireMaterial);
@@ -351,8 +417,151 @@
 
       pointCloud = buildPoints(V, F, E);
       root.add(pointCloud);
+      updateSelectedFaceLabel();
     }
 
+    const paletteHex = [
+      0xff9999,
+      0xffcc99,
+      0xffff99,
+      0xccff99,
+      0x99ff99,
+      0x99ffcc,
+      0x99ffff,
+      0x99ccff,
+      0x9999ff,
+      0xcc99ff,
+      0xff99ff,
+      0xff99cc,
+    ];
+
+    function updateSelectedFaceLabel() {
+      document.getElementById('selectedFaceLabel').textContent = selectedFace >= 0 ? String(selectedFace) : '없음';
+      document.getElementById('currentColorLabel').textContent = '#' + paletteHex[currentColorIndex].toString(16).padStart(6, '0');
+    }
+
+    function buildPalette() {
+      const palette = document.getElementById('palette');
+      palette.innerHTML = '';
+      paletteHex.forEach((hex, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.height = '30px';
+        btn.style.borderRadius = '8px';
+        btn.style.border = i === currentColorIndex ? '2px solid #fff' : '1px solid #334';
+        btn.style.background = '#' + hex.toString(16).padStart(6, '0');
+        btn.title = '#' + hex.toString(16).padStart(6, '0');
+        btn.addEventListener('click', () => {
+          currentColorIndex = i;
+          buildPalette();
+          updateSelectedFaceLabel();
+        });
+        palette.appendChild(btn);
+      });
+    }
+
+    function setFaceColor(faceIndex, paletteIndex) {
+      if (!currentGeometry || faceIndex < 0 || faceIndex >= faceCount) return;
+      faceColorIndices[faceIndex] = paletteIndex;
+      const colorAttr = currentGeometry.getAttribute('color');
+      const c = new THREE.Color(paletteHex[paletteIndex]);
+      const base = faceIndex * 9;
+      for (let i = 0; i < 3; i++) {
+        colorAttr.array[base + i * 3 + 0] = c.r;
+        colorAttr.array[base + i * 3 + 1] = c.g;
+        colorAttr.array[base + i * 3 + 2] = c.b;
+      }
+      colorAttr.needsUpdate = true;
+    }
+
+    function clearFaceColors() {
+      faceColorIndices = Array(faceCount).fill(-1);
+      rebuild();
+    }
+
+    function presetPayload() {
+      return {
+        rv: parseFloat(document.getElementById('rv').value),
+        rf: parseFloat(document.getElementById('rf').value),
+        re: parseFloat(document.getElementById('re').value),
+        faceColorIndices: [...faceColorIndices],
+      };
+    }
+
+    function storageKey(name) {
+      return `disdyakisPreset:${name}`;
+    }
+
+    function refreshPresetList() {
+      const select = document.getElementById('presetSelect');
+      const names = Object.keys(localStorage)
+        .filter(k => k.startsWith('disdyakisPreset:'))
+        .map(k => k.slice('disdyakisPreset:'.length))
+        .sort((a, b) => a.localeCompare(b));
+      select.innerHTML = '<option value="">(없음)</option>';
+      for (const name of names) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      }
+    }
+
+    function savePreset() {
+      const input = document.getElementById('presetName');
+      const name = input.value.trim();
+      if (!name) {
+        alert('프리셋 이름을 입력해 주세요.');
+        return;
+      }
+      localStorage.setItem(storageKey(name), JSON.stringify(presetPayload()));
+      refreshPresetList();
+      document.getElementById('presetSelect').value = name;
+    }
+
+    function loadPreset() {
+      const name = document.getElementById('presetSelect').value;
+      if (!name) return;
+      const raw = localStorage.getItem(storageKey(name));
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      document.getElementById('rv').value = String(data.rv);
+      document.getElementById('rf').value = String(data.rf);
+      document.getElementById('re').value = String(data.re);
+      faceColorIndices = Array.isArray(data.faceColorIndices)
+        ? data.faceColorIndices.slice(0, faceCount).concat(Array(Math.max(0, faceCount - data.faceColorIndices.length)).fill(-1)).slice(0, faceCount)
+        : Array(faceCount).fill(-1);
+      rebuild();
+    }
+
+    function deletePreset() {
+      const name = document.getElementById('presetSelect').value;
+      if (!name) return;
+      localStorage.removeItem(storageKey(name));
+      refreshPresetList();
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function onPointerDown(event) {
+      if (!pickMesh) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObject(pickMesh, false);
+      if (hits.length > 0 && Number.isInteger(hits[0].faceIndex)) {
+        selectedFace = hits[0].faceIndex;
+        setFaceColor(selectedFace, currentColorIndex);
+        updateSelectedFaceLabel();
+        buildPalette();
+      }
+    }
+
+    faceColorIndices = Array(faceCount).fill(-1);
+    buildPalette();
+    refreshPresetList();
     rebuild();
 
     document.getElementById('rv').addEventListener('input', rebuild);
@@ -369,11 +578,25 @@
 
     document.getElementById('reset').addEventListener('click', () => {
       document.getElementById('rv').value = '1.000';
-      document.getElementById('rf').value = '0.880';
-      document.getElementById('re').value = '0.848';
+      document.getElementById('rf').value = '0.938';
+      document.getElementById('re').value = '0.921';
+      selectedFace = -1;
+      faceColorIndices = Array(faceCount).fill(-1);
       controls.reset();
       rebuild();
+      buildPalette();
     });
+
+    document.getElementById('clearColors').addEventListener('click', () => {
+      selectedFace = -1;
+      clearFaceColors();
+      buildPalette();
+    });
+
+    document.getElementById('savePreset').addEventListener('click', savePreset);
+    document.getElementById('loadPreset').addEventListener('click', loadPreset);
+    document.getElementById('deletePreset').addEventListener('click', deletePreset);
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
