@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disdyakis Triacontahedron Visualizer</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b0f14;
+      color: #e8eef5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    #panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(15, 20, 28, 0.82);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      max-width: 340px;
+      line-height: 1.45;
+    }
+
+    #panel h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    #panel p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #c6d2df;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+
+    .row input[type="range"] {
+      width: 100%;
+      grid-column: 1 / span 2;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #213044;
+      color: #e8eef5;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2c405b;
+    }
+
+    .small {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #93a4b8;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="panel">
+      <h1>Disdyakis Triacontahedron</h1>
+      <p>
+        마우스 드래그로 회전, 휠로 확대/축소, 오른쪽 드래그로 이동.
+        아래 슬라이더로 세 종류의 꼭짓점 반지름을 조절할 수 있습니다.
+      </p>
+
+      <div class="row">
+        <span>정점(12개, 5겹 대칭축)</span>
+        <span id="rvLabel">1.000</span>
+        <input id="rv" type="range" min="0.4" max="1.6" step="0.001" value="1.000" />
+      </div>
+
+      <div class="row">
+        <span>면 중심(20개, 3겹 대칭축)</span>
+        <span id="rfLabel">0.880</span>
+        <input id="rf" type="range" min="0.4" max="1.6" step="0.001" value="0.880" />
+      </div>
+
+      <div class="row">
+        <span>모서리 중심(30개, 2겹 대칭축)</span>
+        <span id="reLabel">0.848</span>
+        <input id="re" type="range" min="0.4" max="1.6" step="0.001" value="0.848" />
+      </div>
+
+      <div class="buttons">
+        <button id="toggleWire">와이어프레임 토글</button>
+        <button id="toggleAuto">자동 회전 토글</button>
+        <button id="reset">초기값 복원</button>
+      </div>
+
+      <div class="small">
+        이 버전은 정이십면체의 꼭짓점·모서리 중심·면 중심을 이용해
+        <b>Disdyakis triacontahedron의 조합적 구조</b>를 재구성한 시각화입니다.
+        기본값은 널리 쓰이는 비율에 가깝게 맞춰 두었습니다.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/controls/OrbitControls.js';
+
+    const app = document.getElementById('app');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f14);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 4.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    app.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 1.2;
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+    scene.add(ambient);
+
+    const dir1 = new THREE.DirectionalLight(0xffffff, 1.25);
+    dir1.position.set(4, 3, 5);
+    scene.add(dir1);
+
+    const dir2 = new THREE.DirectionalLight(0x99bbff, 0.75);
+    dir2.position.set(-4, -2, -3);
+    scene.add(dir2);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const solidMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x7fb5ff,
+      metalness: 0.05,
+      roughness: 0.25,
+      transmission: 0.0,
+      side: THREE.DoubleSide,
+      flatShading: true,
+      clearcoat: 0.25,
+    });
+
+    const wireMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 });
+    const pointMaterials = {
+      v: new THREE.MeshBasicMaterial({ color: 0xffc857 }),
+      f: new THREE.MeshBasicMaterial({ color: 0xff6b6b }),
+      e: new THREE.MeshBasicMaterial({ color: 0x4dd0a8 }),
+    };
+
+    let solidMesh = null;
+    let wireframe = null;
+    let pointCloud = null;
+
+    const phi = (1 + Math.sqrt(5)) / 2;
+
+    function vec(x, y, z) {
+      return new THREE.Vector3(x, y, z);
+    }
+
+    function normalizeList(list) {
+      return list.map(v => v.clone().normalize());
+    }
+
+    function dedupeVectors(list, eps = 1e-6) {
+      const out = [];
+      for (const v of list) {
+        let found = false;
+        for (const u of out) {
+          if (u.distanceToSquared(v) < eps * eps) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) out.push(v);
+      }
+      return out;
+    }
+
+    const icoVertices = normalizeList([
+      vec(-1,  phi, 0), vec( 1,  phi, 0), vec(-1, -phi, 0), vec( 1, -phi, 0),
+      vec(0, -1,  phi), vec(0,  1,  phi), vec(0, -1, -phi), vec(0,  1, -phi),
+      vec( phi, 0, -1), vec( phi, 0,  1), vec(-phi, 0, -1), vec(-phi, 0,  1),
+    ]);
+
+    // Face indices for a standard icosahedron.
+    const icoFaces = [
+      [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+      [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+      [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+    ];
+
+    function edgeKey(a, b) {
+      return a < b ? `${a}_${b}` : `${b}_${a}`;
+    }
+
+    const edgeMap = new Map();
+    for (const [a, b, c] of icoFaces) {
+      const edges = [[a, b], [b, c], [c, a]];
+      for (const [u, v] of edges) {
+        const key = edgeKey(u, v);
+        if (!edgeMap.has(key)) {
+          edgeMap.set(key, {
+            a: Math.min(u, v),
+            b: Math.max(u, v),
+            midpoint: icoVertices[u].clone().add(icoVertices[v]).multiplyScalar(0.5).normalize()
+          });
+        }
+      }
+    }
+
+    const edges = Array.from(edgeMap.values());
+    const edgeIndexMap = new Map(edges.map((e, i) => [edgeKey(e.a, e.b), i]));
+
+    const faceCenters = icoFaces.map(([a, b, c]) =>
+      icoVertices[a].clone().add(icoVertices[b]).add(icoVertices[c]).multiplyScalar(1 / 3).normalize()
+    );
+
+    function buildGeometry(rv, rf, re) {
+      const V = icoVertices.map(v => v.clone().multiplyScalar(rv));
+      const F = faceCenters.map(v => v.clone().multiplyScalar(rf));
+      const E = edges.map(e => e.midpoint.clone().multiplyScalar(re));
+
+      const positions = [];
+
+      for (let fi = 0; fi < icoFaces.length; fi++) {
+        const [a, b, c] = icoFaces[fi];
+        const facePoint = F[fi];
+
+        const ordered = [
+          [a, b],
+          [b, c],
+          [c, a]
+        ];
+
+        for (const [u, v] of ordered) {
+          const ei = edgeIndexMap.get(edgeKey(u, v));
+          const edgePoint = E[ei];
+          const vertexPoint = V[u];
+
+          positions.push(facePoint.x, facePoint.y, facePoint.z);
+          positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
+          positions.push(vertexPoint.x, vertexPoint.y, vertexPoint.z);
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.computeVertexNormals();
+      return { geometry, V, F, E };
+    }
+
+    function buildPoints(V, F, E) {
+      const group = new THREE.Group();
+      const sphereGeo = new THREE.SphereGeometry(0.025, 16, 16);
+
+      for (const p of V) {
+        const m = new THREE.Mesh(sphereGeo, pointMaterials.v);
+        m.position.copy(p);
+        group.add(m);
+      }
+      for (const p of F) {
+        const m = new THREE.Mesh(sphereGeo, pointMaterials.f);
+        m.position.copy(p);
+        group.add(m);
+      }
+      for (const p of E) {
+        const m = new THREE.Mesh(sphereGeo, pointMaterials.e);
+        m.position.copy(p);
+        group.add(m);
+      }
+      return group;
+    }
+
+    function rebuild() {
+      const rv = parseFloat(document.getElementById('rv').value);
+      const rf = parseFloat(document.getElementById('rf').value);
+      const re = parseFloat(document.getElementById('re').value);
+
+      document.getElementById('rvLabel').textContent = rv.toFixed(3);
+      document.getElementById('rfLabel').textContent = rf.toFixed(3);
+      document.getElementById('reLabel').textContent = re.toFixed(3);
+
+      if (solidMesh) {
+        root.remove(solidMesh);
+        solidMesh.geometry.dispose();
+      }
+      if (wireframe) {
+        root.remove(wireframe);
+        wireframe.geometry.dispose();
+      }
+      if (pointCloud) {
+        root.remove(pointCloud);
+      }
+
+      const { geometry, V, F, E } = buildGeometry(rv, rf, re);
+      solidMesh = new THREE.Mesh(geometry, solidMaterial);
+      root.add(solidMesh);
+
+      const wireGeo = new THREE.EdgesGeometry(geometry, 1e-6);
+      wireframe = new THREE.LineSegments(wireGeo, wireMaterial);
+      root.add(wireframe);
+
+      pointCloud = buildPoints(V, F, E);
+      root.add(pointCloud);
+    }
+
+    rebuild();
+
+    document.getElementById('rv').addEventListener('input', rebuild);
+    document.getElementById('rf').addEventListener('input', rebuild);
+    document.getElementById('re').addEventListener('input', rebuild);
+
+    document.getElementById('toggleWire').addEventListener('click', () => {
+      wireframe.visible = !wireframe.visible;
+    });
+
+    document.getElementById('toggleAuto').addEventListener('click', () => {
+      controls.autoRotate = !controls.autoRotate;
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      document.getElementById('rv').value = '1.000';
+      document.getElementById('rf').value = '0.880';
+      document.getElementById('re').value = '0.848';
+      controls.reset();
+      rebuild();
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
