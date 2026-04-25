@@ -39,7 +39,7 @@
       background: rgba(15, 20, 28, 0.82);
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-      max-width: 340px;
+      max-width: 360px;
       line-height: 1.45;
     }
 
@@ -89,6 +89,15 @@
       background: #2c405b;
     }
 
+    input[type="text"],
+    select {
+      background: #17212e;
+      color: #e8eef5;
+      border: 1px solid #2b3a4f;
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
     .small {
       margin-top: 10px;
       font-size: 12px;
@@ -102,8 +111,26 @@
       <h1>Disdyakis Triacontahedron</h1>
       <p>
         마우스 드래그로 회전, 휠로 확대/축소, 오른쪽 드래그로 이동.
-        아래 슬라이더로 세 종류의 꼭짓점 반지름을 조절할 수 있습니다.
+        아래 슬라이더로 세 종류의 반지름과 E' 분열 계수를 조절할 수 있습니다.
       </p>
+
+      <div class="row">
+        <span>ε (E weight)</span>
+        <span id="splitEpsilonLabel">1.300</span>
+        <input id="splitEpsilon" type="range" min="1.000" max="2.000" step="0.001" value="1.300" />
+      </div>
+
+      <div class="row">
+        <span>φ (F 방향)</span>
+        <span id="splitPhiLabel">0.220</span>
+        <input id="splitPhi" type="range" min="0.000" max="1.000" step="0.001" value="0.220" />
+      </div>
+
+      <div class="row">
+        <span>υ (V 방향)</span>
+        <span id="splitUpsilonLabel">0.080</span>
+        <input id="splitUpsilon" type="range" min="0.000" max="1.000" step="0.001" value="0.080" />
+      </div>
 
       <div class="row">
         <span>정점(12개, 5겹 대칭축)</span>
@@ -127,40 +154,30 @@
         <button id="toggleWire">와이어프레임 토글</button>
         <button id="toggleAuto">자동 회전 토글</button>
         <button id="reset">초기값 복원</button>
-        <button id="clearColors">색 초기화</button>
+        <button id="toggleSplitMode">분할: E'E'</button>
+        <button id="toggleQuadDiagonal">사각형 대각선: /</button>
       </div>
-
-      <div class="row">
-        <span>현재 선택 면</span>
-        <span id="selectedFaceLabel">없음</span>
-      </div>
-
-      <div class="row">
-        <span>팔레트</span>
-        <span id="currentColorLabel">#ff9999</span>
-      </div>
-      <div id="palette" style="display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;margin:8px 0 12px;"></div>
 
       <div class="row">
         <label for="presetName">프리셋 이름</label>
-        <input id="presetName" type="text" placeholder="preset name" style="grid-column:2; background:#17212e;color:#e8eef5;border:1px solid #2b3a4f;border-radius:8px;padding:6px 8px;" />
+        <input id="presetName" type="text" placeholder="preset name" style="grid-column: 2;" />
       </div>
+
       <div class="buttons">
         <button id="savePreset">프리셋 저장</button>
         <button id="loadPreset">불러오기</button>
         <button id="deletePreset">삭제</button>
       </div>
+
       <div class="row">
         <label for="presetSelect">저장된 프리셋</label>
-        <select id="presetSelect" style="grid-column:2; background:#17212e;color:#e8eef5;border:1px solid #2b3a4f;border-radius:8px;padding:6px 8px;">
+        <select id="presetSelect" style="grid-column: 2;">
           <option value="">(없음)</option>
         </select>
       </div>
 
       <div class="small">
-        이 버전은 정이십면체의 꼭짓점·모서리 중심·면 중심을 이용해
-        <b>Disdyakis triacontahedron의 조합적 구조</b>를 재구성한 시각화입니다.
-        기본값은 현재 exact 비율 근사값으로 맞춰 두었습니다.
+        면 종류는 edge 주변 사각형 E'E'E'E', 그와 이웃한 FE'E'와 VE'E', 그리고 코너 사각형의 분할면으로 구성됩니다.
       </div>
     </div>
   </div>
@@ -170,6 +187,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     const app = document.getElementById('app');
+    const golden = (1 + Math.sqrt(5)) / 2;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b0f14);
@@ -186,28 +204,31 @@
     controls.enableDamping = true;
     controls.autoRotate = false;
     controls.autoRotateSpeed = 1.2;
+
     const ambient = new THREE.AmbientLight(0xffffff, 1.15);
     camera.add(ambient);
-
     const dir1 = new THREE.DirectionalLight(0xffffff, 1.35);
     dir1.position.set(3.5, 2.5, 6);
     camera.add(dir1);
-
     const dir2 = new THREE.DirectionalLight(0xdde8ff, 0.7);
     dir2.position.set(-2.5, -1.5, 4);
     camera.add(dir2);
-
     scene.add(camera);
 
     const root = new THREE.Group();
     scene.add(root);
 
     const solidMaterial = new THREE.MeshLambertMaterial({
+      color: 0x7fb5ff,
       side: THREE.DoubleSide,
-      vertexColors: true,
     });
 
-    const wireMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 });
+    const wireMaterial = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.45,
+    });
+
     const pointMaterials = {
       v: new THREE.MeshBasicMaterial({ color: 0xffc857 }),
       f: new THREE.MeshBasicMaterial({ color: 0xff6b6b }),
@@ -217,14 +238,8 @@
     let solidMesh = null;
     let wireframe = null;
     let pointCloud = null;
-    let pickMesh = null;
-    let currentGeometry = null;
-    let faceCount = 120;
-    let selectedFace = -1;
-    let currentColorIndex = 0;
-    let faceColorIndices = [];
-
-    const phi = (1 + Math.sqrt(5)) / 2;
+    let splitMode = 'ee';
+    let quadDiagonalMode = 'slash';
 
     function vec(x, y, z) {
       return new THREE.Vector3(x, y, z);
@@ -234,33 +249,17 @@
       return list.map(v => v.clone().normalize());
     }
 
-    function dedupeVectors(list, eps = 1e-6) {
-      const out = [];
-      for (const v of list) {
-        let found = false;
-        for (const u of out) {
-          if (u.distanceToSquared(v) < eps * eps) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) out.push(v);
-      }
-      return out;
-    }
-
     const icoVertices = normalizeList([
-      vec(-1,  phi, 0), vec( 1,  phi, 0), vec(-1, -phi, 0), vec( 1, -phi, 0),
-      vec(0, -1,  phi), vec(0,  1,  phi), vec(0, -1, -phi), vec(0,  1, -phi),
-      vec( phi, 0, -1), vec( phi, 0,  1), vec(-phi, 0, -1), vec(-phi, 0,  1),
+      vec(-1,  golden, 0), vec( 1,  golden, 0), vec(-1, -golden, 0), vec( 1, -golden, 0),
+      vec(0, -1,  golden), vec(0,  1,  golden), vec(0, -1, -golden), vec(0,  1, -golden),
+      vec( golden, 0, -1), vec( golden, 0,  1), vec(-golden, 0, -1), vec(-golden, 0,  1),
     ]);
 
-    // Face indices for a standard icosahedron.
     const icoFaces = [
       [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
       [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
       [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
-      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
     ];
 
     function edgeKey(a, b) {
@@ -269,123 +268,253 @@
 
     const edgeMap = new Map();
     for (const [a, b, c] of icoFaces) {
-      const edges = [[a, b], [b, c], [c, a]];
-      for (const [u, v] of edges) {
+      for (const [u, v] of [[a, b], [b, c], [c, a]]) {
         const key = edgeKey(u, v);
         if (!edgeMap.has(key)) {
           edgeMap.set(key, {
             a: Math.min(u, v),
             b: Math.max(u, v),
-            midpoint: icoVertices[u].clone().add(icoVertices[v]).multiplyScalar(0.5).normalize()
+            midpoint: icoVertices[u].clone().add(icoVertices[v]).multiplyScalar(0.5).normalize(),
           });
         }
       }
     }
 
     const edges = Array.from(edgeMap.values());
-    const edgeIndexMap = new Map(edges.map((e, i) => [edgeKey(e.a, e.b), i]));
+    const edgeIndexMap = new Map(edges.map((edge, index) => [edgeKey(edge.a, edge.b), index]));
 
-    const faceCenters = icoFaces.map(([a, b, c]) =>
+    const faceCenters = icoFaces.map(([a, b, c]) => (
       icoVertices[a].clone().add(icoVertices[b]).add(icoVertices[c]).multiplyScalar(1 / 3).normalize()
-    );
+    ));
+
+    const edgeIncidentFaces = new Map();
+    for (let fi = 0; fi < icoFaces.length; fi++) {
+      const [a, b, c] = icoFaces[fi];
+      for (const [u, v] of [[a, b], [b, c], [c, a]]) {
+        const ei = edgeIndexMap.get(edgeKey(u, v));
+        if (!edgeIncidentFaces.has(ei)) edgeIncidentFaces.set(ei, []);
+        edgeIncidentFaces.get(ei).push(fi);
+      }
+    }
+
+    function getSplitEpsilon() {
+      return parseFloat(document.getElementById('splitEpsilon').value);
+    }
+
+    function getSplitPhi() {
+      return parseFloat(document.getElementById('splitPhi').value);
+    }
+
+    function getSplitUpsilonValue() {
+      return parseFloat(document.getElementById('splitUpsilon').value);
+    }
+
+    function makeSplitPoint(edgePoint, facePoint, vertexPoint, eps, phi, ups) {
+      const base = edgePoint.clone().multiplyScalar(1 - phi - ups)
+        .add(facePoint.clone().multiplyScalar(phi))
+        .add(vertexPoint.clone().multiplyScalar(ups));
+      return base.multiplyScalar(eps);
+    }
+
+    function triangleNormal(p0, p1, p2) {
+      return new THREE.Vector3()
+        .subVectors(p1, p0)
+        .cross(new THREE.Vector3().subVectors(p2, p0));
+    }
+
+    function orientTriangleOutward(p0, p1, p2) {
+      const centroid = p0.clone().add(p1).add(p2).multiplyScalar(1 / 3);
+      const normal = triangleNormal(p0, p1, p2);
+      return normal.dot(centroid) >= 0 ? [p0, p1, p2] : [p0, p2, p1];
+    }
 
     function buildGeometry(rv, rf, re) {
+      const splitEps = getSplitEpsilon();
+      const splitPhi = getSplitPhi();
+      const splitUpsilon = getSplitUpsilonValue();
+
       const V = icoVertices.map(v => v.clone().multiplyScalar(rv));
       const F = faceCenters.map(v => v.clone().multiplyScalar(rf));
       const E = edges.map(e => e.midpoint.clone().multiplyScalar(re));
 
       const positions = [];
-      const colors = [];
-      const pickPositions = [];
+      const wirePositions = [];
+      const faceEdgeSplitMap = new Map();
+      let triangleCount = 0;
 
-      const paletteColors = paletteHex.map(hex => new THREE.Color(hex));
-      const defaultColor = new THREE.Color(0x7fb5ff);
-      let triangleIndex = 0;
+      function faceEdgeKey(faceIndex, edgeIndex) {
+        return `${faceIndex}|${edgeIndex}`;
+      }
+
+      function pushTriangleRaw(a, b, c, addWire = true) {
+        positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+        triangleCount += 1;
+        if (addWire) {
+          wirePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          wirePositions.push(b.x, b.y, b.z, c.x, c.y, c.z);
+          wirePositions.push(c.x, c.y, c.z, a.x, a.y, a.z);
+        }
+      }
+
+      function pushTriangle(p0, p1, p2, addWire = true) {
+        const [a, b, c] = orientTriangleOutward(p0, p1, p2);
+        pushTriangleRaw(a, b, c, addWire);
+      }
+
+      function pushQuad(p0, p1, p2, p3, addWireBoundary = true) {
+        let ordered = [p0, p1, p2, p3];
+        const centroid = ordered[0].clone().add(ordered[1]).add(ordered[2]).add(ordered[3]).multiplyScalar(0.25);
+        const n0 = triangleNormal(ordered[0], ordered[1], ordered[2]);
+        if (n0.dot(centroid) < 0) {
+          ordered = [ordered[0], ordered[3], ordered[2], ordered[1]];
+        }
+
+        if (addWireBoundary) {
+          for (let i = 0; i < 4; i++) {
+            const a = ordered[i];
+            const b = ordered[(i + 1) % 4];
+            wirePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          }
+        }
+
+        if (quadDiagonalMode === 'slash') {
+          pushTriangle(ordered[0], ordered[1], ordered[2], false);
+          pushTriangle(ordered[0], ordered[2], ordered[3], false);
+        } else {
+          pushTriangle(ordered[1], ordered[2], ordered[3], false);
+          pushTriangle(ordered[1], ordered[3], ordered[0], false);
+        }
+      }
 
       for (let fi = 0; fi < icoFaces.length; fi++) {
         const [a, b, c] = icoFaces[fi];
         const facePoint = F[fi];
 
-        const ordered = [
-          [a, b],
-          [b, c],
-          [c, a]
+        const eab = edgeIndexMap.get(edgeKey(a, b));
+        const ebc = edgeIndexMap.get(edgeKey(b, c));
+        const eca = edgeIndexMap.get(edgeKey(c, a));
+
+        const sab_a = makeSplitPoint(E[eab], facePoint, V[a], splitEps, splitPhi, splitUpsilon);
+        const sab_b = makeSplitPoint(E[eab], facePoint, V[b], splitEps, splitPhi, splitUpsilon);
+        const sbc_b = makeSplitPoint(E[ebc], facePoint, V[b], splitEps, splitPhi, splitUpsilon);
+        const sbc_c = makeSplitPoint(E[ebc], facePoint, V[c], splitEps, splitPhi, splitUpsilon);
+        const sca_c = makeSplitPoint(E[eca], facePoint, V[c], splitEps, splitPhi, splitUpsilon);
+        const sca_a = makeSplitPoint(E[eca], facePoint, V[a], splitEps, splitPhi, splitUpsilon);
+
+        faceEdgeSplitMap.set(faceEdgeKey(fi, eab), { va: a, pa: sab_a, vb: b, pb: sab_b });
+        faceEdgeSplitMap.set(faceEdgeKey(fi, ebc), { va: b, pa: sbc_b, vb: c, pb: sbc_c });
+        faceEdgeSplitMap.set(faceEdgeKey(fi, eca), { va: c, pa: sca_c, vb: a, pb: sca_a });
+
+        const cornerQuads = [
+          [facePoint, V[a], sca_a, sab_a],
+          [facePoint, V[b], sab_b, sbc_b],
+          [facePoint, V[c], sbc_c, sca_c],
         ];
 
-        for (const [u, v] of ordered) {
-          const ei = edgeIndexMap.get(edgeKey(u, v));
-          const edgePoint = E[ei];
-          const vertexPointU = V[u];
-          const vertexPointV = V[v];
-
-          const ciA = faceColorIndices[triangleIndex] ?? -1;
-          const colA = ciA >= 0 ? paletteColors[ciA] : defaultColor;
-
-          positions.push(facePoint.x, facePoint.y, facePoint.z);
-          positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
-          positions.push(vertexPointU.x, vertexPointU.y, vertexPointU.z);
-          for (let k = 0; k < 3; k++) colors.push(colA.r, colA.g, colA.b);
-          pickPositions.push(facePoint.x, facePoint.y, facePoint.z);
-          pickPositions.push(edgePoint.x, edgePoint.y, edgePoint.z);
-          pickPositions.push(vertexPointU.x, vertexPointU.y, vertexPointU.z);
-          triangleIndex++;
-
-          const ciB = faceColorIndices[triangleIndex] ?? -1;
-          const colB = ciB >= 0 ? paletteColors[ciB] : defaultColor;
-
-          positions.push(facePoint.x, facePoint.y, facePoint.z);
-          positions.push(vertexPointV.x, vertexPointV.y, vertexPointV.z);
-          positions.push(edgePoint.x, edgePoint.y, edgePoint.z);
-          for (let k = 0; k < 3; k++) colors.push(colB.r, colB.g, colB.b);
-          pickPositions.push(facePoint.x, facePoint.y, facePoint.z);
-          pickPositions.push(vertexPointV.x, vertexPointV.y, vertexPointV.z);
-          pickPositions.push(edgePoint.x, edgePoint.y, edgePoint.z);
-          triangleIndex++;
+        for (const [fp, vp, ep0, ep1] of cornerQuads) {
+          if (splitMode === 'ee') {
+            pushTriangle(fp, ep0, ep1, true);
+            pushTriangle(vp, ep1, ep0, true);
+          } else {
+            pushTriangle(fp, vp, ep0, true);
+            pushTriangle(fp, ep1, vp, true);
+          }
         }
       }
 
+      for (let ei = 0; ei < edges.length; ei++) {
+        const incidentFaces = edgeIncidentFaces.get(ei) ?? [];
+        if (incidentFaces.length !== 2) continue;
+
+        const edge = edges[ei];
+        const [f0, f1] = incidentFaces;
+        const data0 = faceEdgeSplitMap.get(faceEdgeKey(f0, ei));
+        const data1 = faceEdgeSplitMap.get(faceEdgeKey(f1, ei));
+        if (!data0 || !data1) continue;
+
+        const va = edge.a;
+        const vb = edge.b;
+        const p0a = data0.va === va ? data0.pa : data0.pb;
+        const p0b = data0.va === vb ? data0.pa : data0.pb;
+        const p1a = data1.va === va ? data1.pa : data1.pb;
+        const p1b = data1.va === vb ? data1.pa : data1.pb;
+
+        pushQuad(p0a, p0b, p1b, p1a, true);
+        pushTriangle(F[f0], p0a, p0b, true);
+        pushTriangle(F[f1], p1b, p1a, true);
+        pushTriangle(V[va], p1a, p0a, true);
+        pushTriangle(V[vb], p0b, p1b, true);
+      }
+
+      console.assert(triangleCount === 300, 'Expected 300 triangles total.', { triangleCount });
+
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geometry.computeVertexNormals();
 
-      const pickGeometry = new THREE.BufferGeometry();
-      pickGeometry.setAttribute('position', new THREE.Float32BufferAttribute(pickPositions, 3));
-      pickGeometry.computeVertexNormals();
+      const wireGeometry = new THREE.BufferGeometry();
+      wireGeometry.setAttribute('position', new THREE.Float32BufferAttribute(wirePositions, 3));
 
-      return { geometry, pickGeometry, V, F, E };
+      return { geometry, wireGeometry, V, F, E };
     }
 
     function buildPoints(V, F, E) {
       const group = new THREE.Group();
       const sphereGeo = new THREE.SphereGeometry(0.018, 16, 16);
+      const splitEps = getSplitEpsilon();
+      const splitPhi = getSplitPhi();
+      const splitUpsilon = getSplitUpsilonValue();
 
       for (const p of V) {
-        const m = new THREE.Mesh(sphereGeo, pointMaterials.v);
-        m.position.copy(p);
-        group.add(m);
+        const mesh = new THREE.Mesh(sphereGeo, pointMaterials.v);
+        mesh.position.copy(p);
+        group.add(mesh);
       }
+
       for (const p of F) {
-        const m = new THREE.Mesh(sphereGeo, pointMaterials.f);
-        m.position.copy(p);
-        group.add(m);
+        const mesh = new THREE.Mesh(sphereGeo, pointMaterials.f);
+        mesh.position.copy(p);
+        group.add(mesh);
       }
-      for (const p of E) {
-        const m = new THREE.Mesh(sphereGeo, pointMaterials.e);
-        m.position.copy(p);
-        group.add(m);
+
+      for (let fi = 0; fi < icoFaces.length; fi++) {
+        const [a, b, c] = icoFaces[fi];
+        const facePoint = F[fi];
+        for (const [u, v] of [[a, b], [b, c], [c, a]]) {
+          const ei = edgeIndexMap.get(edgeKey(u, v));
+          const edgePoint = E[ei];
+          const splitPointU = makeSplitPoint(edgePoint, facePoint, V[u], splitEps, splitPhi, splitUpsilon);
+          const splitPointV = makeSplitPoint(edgePoint, facePoint, V[v], splitEps, splitPhi, splitUpsilon);
+
+          const m1 = new THREE.Mesh(sphereGeo, pointMaterials.e);
+          m1.position.copy(splitPointU);
+          group.add(m1);
+
+          const m2 = new THREE.Mesh(sphereGeo, pointMaterials.e);
+          m2.position.copy(splitPointV);
+          group.add(m2);
+        }
       }
+
       return group;
+    }
+
+    function updateLabels() {
+      document.getElementById('splitEpsilonLabel').textContent = getSplitEpsilon().toFixed(3);
+      document.getElementById('splitPhiLabel').textContent = getSplitPhi().toFixed(3);
+      document.getElementById('splitUpsilonLabel').textContent = getSplitUpsilonValue().toFixed(3);
+      document.getElementById('rvLabel').textContent = parseFloat(document.getElementById('rv').value).toFixed(3);
+      document.getElementById('rfLabel').textContent = parseFloat(document.getElementById('rf').value).toFixed(3);
+      document.getElementById('reLabel').textContent = parseFloat(document.getElementById('re').value).toFixed(3);
+      document.getElementById('toggleSplitMode').textContent = splitMode === 'ee' ? "분할: E'E'" : '분할: FV';
+      document.getElementById('toggleQuadDiagonal').textContent = quadDiagonalMode === 'slash' ? '사각형 대각선: /' : '사각형 대각선: \\';
     }
 
     function rebuild() {
       const rv = parseFloat(document.getElementById('rv').value);
       const rf = parseFloat(document.getElementById('rf').value);
       const re = parseFloat(document.getElementById('re').value);
-
-      document.getElementById('rvLabel').textContent = rv.toFixed(3);
-      document.getElementById('rfLabel').textContent = rf.toFixed(3);
-      document.getElementById('reLabel').textContent = re.toFixed(3);
+      updateLabels();
 
       if (solidMesh) {
         root.remove(solidMesh);
@@ -398,85 +527,16 @@
       if (pointCloud) {
         root.remove(pointCloud);
       }
-      if (pickMesh) {
-        root.remove(pickMesh);
-        pickMesh.geometry.dispose();
-      }
 
-      const { geometry, pickGeometry, V, F, E } = buildGeometry(rv, rf, re);
-      currentGeometry = geometry;
+      const { geometry, wireGeometry, V, F, E } = buildGeometry(rv, rf, re);
       solidMesh = new THREE.Mesh(geometry, solidMaterial);
       root.add(solidMesh);
 
-      pickMesh = new THREE.Mesh(pickGeometry, new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
-      root.add(pickMesh);
-
-      const wireGeo = new THREE.EdgesGeometry(geometry, 1e-6);
-      wireframe = new THREE.LineSegments(wireGeo, wireMaterial);
+      wireframe = new THREE.LineSegments(wireGeometry, wireMaterial);
       root.add(wireframe);
 
       pointCloud = buildPoints(V, F, E);
       root.add(pointCloud);
-      updateSelectedFaceLabel();
-    }
-
-    const paletteHex = [
-      0xff9999,
-      0xffcc99,
-      0xffff99,
-      0xccff99,
-      0x99ff99,
-      0x99ffcc,
-      0x99ffff,
-      0x99ccff,
-      0x9999ff,
-      0xcc99ff,
-      0xff99ff,
-      0xff99cc,
-    ];
-
-    function updateSelectedFaceLabel() {
-      document.getElementById('selectedFaceLabel').textContent = selectedFace >= 0 ? String(selectedFace) : '없음';
-      document.getElementById('currentColorLabel').textContent = '#' + paletteHex[currentColorIndex].toString(16).padStart(6, '0');
-    }
-
-    function buildPalette() {
-      const palette = document.getElementById('palette');
-      palette.innerHTML = '';
-      paletteHex.forEach((hex, i) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.style.height = '30px';
-        btn.style.borderRadius = '8px';
-        btn.style.border = i === currentColorIndex ? '2px solid #fff' : '1px solid #334';
-        btn.style.background = '#' + hex.toString(16).padStart(6, '0');
-        btn.title = '#' + hex.toString(16).padStart(6, '0');
-        btn.addEventListener('click', () => {
-          currentColorIndex = i;
-          buildPalette();
-          updateSelectedFaceLabel();
-        });
-        palette.appendChild(btn);
-      });
-    }
-
-    function setFaceColor(faceIndex, paletteIndex) {
-      if (!currentGeometry || faceIndex < 0 || faceIndex >= faceCount) return;
-      faceColorIndices[faceIndex] = paletteIndex;
-      const colorAttr = currentGeometry.getAttribute('color');
-      const c = new THREE.Color(paletteHex[paletteIndex]);
-      const base = faceIndex * 9;
-      for (let i = 0; i < 3; i++) {
-        colorAttr.array[base + i * 3 + 0] = c.r;
-        colorAttr.array[base + i * 3 + 1] = c.g;
-        colorAttr.array[base + i * 3 + 2] = c.b;
-      }
-      colorAttr.needsUpdate = true;
-    }
-
-    function clearFaceColors() {
-      faceColorIndices = Array(faceCount).fill(-1);
-      rebuild();
     }
 
     function presetPayload() {
@@ -484,7 +544,11 @@
         rv: parseFloat(document.getElementById('rv').value),
         rf: parseFloat(document.getElementById('rf').value),
         re: parseFloat(document.getElementById('re').value),
-        faceColorIndices: [...faceColorIndices],
+        splitEpsilon: getSplitEpsilon(),
+        splitPhi: getSplitPhi(),
+        splitUpsilon: getSplitUpsilonValue(),
+        splitMode,
+        quadDiagonalMode,
       };
     }
 
@@ -495,9 +559,10 @@
     function refreshPresetList() {
       const select = document.getElementById('presetSelect');
       const names = Object.keys(localStorage)
-        .filter(k => k.startsWith('disdyakisPreset:'))
-        .map(k => k.slice('disdyakisPreset:'.length))
+        .filter(key => key.startsWith('disdyakisPreset:'))
+        .map(key => key.slice('disdyakisPreset:'.length))
         .sort((a, b) => a.localeCompare(b));
+
       select.innerHTML = '<option value="">(없음)</option>';
       for (const name of names) {
         const option = document.createElement('option');
@@ -524,13 +589,17 @@
       if (!name) return;
       const raw = localStorage.getItem(storageKey(name));
       if (!raw) return;
+
       const data = JSON.parse(raw);
-      document.getElementById('rv').value = String(data.rv);
-      document.getElementById('rf').value = String(data.rf);
-      document.getElementById('re').value = String(data.re);
-      faceColorIndices = Array.isArray(data.faceColorIndices)
-        ? data.faceColorIndices.slice(0, faceCount).concat(Array(Math.max(0, faceCount - data.faceColorIndices.length)).fill(-1)).slice(0, faceCount)
-        : Array(faceCount).fill(-1);
+      document.getElementById('rv').value = String(data.rv ?? 1.0);
+      document.getElementById('rf').value = String(data.rf ?? 0.938);
+      document.getElementById('re').value = String(data.re ?? 0.921);
+      document.getElementById('splitEpsilon').value = String(data.splitEpsilon ?? 1.300);
+      document.getElementById('splitPhi').value = String(data.splitPhi ?? 0.220);
+      document.getElementById('splitUpsilon').value = String(data.splitUpsilon ?? 0.080);
+      splitMode = data.splitMode === 'fv' ? 'fv' : 'ee';
+      quadDiagonalMode = data.quadDiagonalMode === 'backslash' ? 'backslash' : 'slash';
+      normalizeSplitSliders();
       rebuild();
     }
 
@@ -541,35 +610,81 @@
       refreshPresetList();
     }
 
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
+    function normalizeSplitSliders(changedId = null) {
+      const epsEl = document.getElementById('splitEpsilon');
+      const phiEl = document.getElementById('splitPhi');
+      const upsEl = document.getElementById('splitUpsilon');
 
-    function onPointerDown(event) {
-      if (!pickMesh) return;
-      const rect = renderer.domElement.getBoundingClientRect();
-      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObject(pickMesh, false);
-      if (hits.length > 0 && Number.isInteger(hits[0].faceIndex)) {
-        selectedFace = hits[0].faceIndex;
-        setFaceColor(selectedFace, currentColorIndex);
-        updateSelectedFaceLabel();
-        buildPalette();
+      let e = parseFloat(epsEl.value);
+      let p = parseFloat(phiEl.value);
+      let u = parseFloat(upsEl.value);
+
+      e = Number.isFinite(e) ? Math.max(1, Math.min(2, e)) : 1;
+      p = Number.isFinite(p) ? Math.max(0, Math.min(1, p)) : 0;
+      u = Number.isFinite(u) ? Math.max(0, Math.min(1, u)) : 0;
+
+      if (changedId === 'splitPhi') {
+        if (p + u > 1) {
+          u = Math.max(0, 1 - p);
+        }
+      } else if (changedId === 'splitUpsilon') {
+        if (p + u > 1) {
+          p = Math.max(0, 1 - u);
+        }
+      } else if (changedId === 'splitEpsilon') {
+        // epsilon only scales E'; phi + upsilon is constrained independently by 1.
+      } else if (p + u > 1) {
+        const sum = p + u;
+        if (sum > 0) {
+          const scale = 1 / sum;
+          p *= scale;
+          u *= scale;
+        } else {
+          p = 0;
+          u = 0;
+        }
       }
+
+      p = Math.max(0, Math.min(1, p));
+      u = Math.max(0, Math.min(1 - p, u));
+
+      epsEl.value = e.toFixed(3);
+      phiEl.value = p.toFixed(3);
+      upsEl.value = u.toFixed(3);
+
+      epsEl.dataset.prevValue = epsEl.value;
+      phiEl.dataset.prevValue = phiEl.value;
+      upsEl.dataset.prevValue = upsEl.value;
     }
 
-    faceColorIndices = Array(faceCount).fill(-1);
-    buildPalette();
     refreshPresetList();
+    document.getElementById('splitEpsilon').dataset.prevValue = document.getElementById('splitEpsilon').value;
+    document.getElementById('splitPhi').dataset.prevValue = document.getElementById('splitPhi').value;
+    document.getElementById('splitUpsilon').dataset.prevValue = document.getElementById('splitUpsilon').value;
+    normalizeSplitSliders();
     rebuild();
 
     document.getElementById('rv').addEventListener('input', rebuild);
     document.getElementById('rf').addEventListener('input', rebuild);
     document.getElementById('re').addEventListener('input', rebuild);
 
+    document.getElementById('splitEpsilon').addEventListener('input', () => {
+      normalizeSplitSliders('splitEpsilon');
+      rebuild();
+    });
+
+    document.getElementById('splitPhi').addEventListener('input', () => {
+      normalizeSplitSliders('splitPhi');
+      rebuild();
+    });
+
+    document.getElementById('splitUpsilon').addEventListener('input', () => {
+      normalizeSplitSliders('splitUpsilon');
+      rebuild();
+    });
+
     document.getElementById('toggleWire').addEventListener('click', () => {
-      wireframe.visible = !wireframe.visible;
+      if (wireframe) wireframe.visible = !wireframe.visible;
     });
 
     document.getElementById('toggleAuto').addEventListener('click', () => {
@@ -580,23 +695,29 @@
       document.getElementById('rv').value = '1.000';
       document.getElementById('rf').value = '0.938';
       document.getElementById('re').value = '0.921';
-      selectedFace = -1;
-      faceColorIndices = Array(faceCount).fill(-1);
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.220';
+      document.getElementById('splitUpsilon').value = '0.080';
+      splitMode = 'ee';
+      quadDiagonalMode = 'slash';
+      normalizeSplitSliders();
       controls.reset();
       rebuild();
-      buildPalette();
     });
 
-    document.getElementById('clearColors').addEventListener('click', () => {
-      selectedFace = -1;
-      clearFaceColors();
-      buildPalette();
+    document.getElementById('toggleSplitMode').addEventListener('click', () => {
+      splitMode = splitMode === 'ee' ? 'fv' : 'ee';
+      rebuild();
+    });
+
+    document.getElementById('toggleQuadDiagonal').addEventListener('click', () => {
+      quadDiagonalMode = quadDiagonalMode === 'slash' ? 'backslash' : 'slash';
+      rebuild();
     });
 
     document.getElementById('savePreset').addEventListener('click', savePreset);
     document.getElementById('loadPreset').addEventListener('click', loadPreset);
     document.getElementById('deletePreset').addEventListener('click', deletePreset);
-    renderer.domElement.addEventListener('pointerdown', onPointerDown);
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -604,11 +725,85 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    function runGeometrySanityChecks() {
+      const rv = 1.0;
+      const rf = 0.938;
+      const re = 0.921;
+      const prevSplitMode = splitMode;
+      const prevQuadMode = quadDiagonalMode;
+      const prevEps = document.getElementById('splitEpsilon').value;
+      const prevPhi = document.getElementById('splitPhi').value;
+      const prevUpsilon = document.getElementById('splitUpsilon').value;
+
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.220';
+      document.getElementById('splitUpsilon').value = '0.080';
+      normalizeSplitSliders();
+
+      splitMode = 'ee';
+      quadDiagonalMode = 'slash';
+      const testA = buildGeometry(rv, rf, re);
+      console.assert(testA.geometry.getAttribute('position').count === 300 * 3, 'EE/slash should produce 300 triangles.');
+
+      splitMode = 'fv';
+      quadDiagonalMode = 'backslash';
+      const testB = buildGeometry(rv, rf, re);
+      console.assert(testB.geometry.getAttribute('position').count === 300 * 3, 'FV/backslash should produce 300 triangles.');
+
+      document.getElementById('splitEpsilon').value = '1.200';
+      document.getElementById('splitPhi').value = '0.180';
+      document.getElementById('splitUpsilon').value = '0.170';
+      normalizeSplitSliders('splitUpsilon');
+      console.assert(getSplitPhi() + getSplitUpsilonValue() <= 1 + 1e-9, 'phi + upsilon must stay <= 1.');
+
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.200';
+      document.getElementById('splitUpsilon').value = '0.100';
+      document.getElementById('splitPhi').value = '0.180';
+      normalizeSplitSliders('splitPhi');
+      console.assert(Math.abs(getSplitPhi() - 0.180) < 1e-9, 'phi should decrease alone inside the boundary.');
+      console.assert(Math.abs(getSplitUpsilonValue() - 0.100) < 1e-9, 'upsilon should stay fixed when phi decreases inside the boundary.');
+
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.200';
+      document.getElementById('splitUpsilon').value = '0.100';
+      document.getElementById('splitPhi').value = '0.240';
+      normalizeSplitSliders('splitPhi');
+      console.assert(Math.abs(getSplitPhi() - 0.240) < 1e-9, 'phi should keep the changed value when exceeding the boundary.');
+      console.assert(Math.abs(getSplitUpsilonValue() - 0.060) < 1e-9, 'upsilon should decrease when phi increases past the boundary.');
+
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.200';
+      document.getElementById('splitUpsilon').value = '0.100';
+      document.getElementById('splitUpsilon').value = '0.080';
+      normalizeSplitSliders('splitUpsilon');
+      console.assert(Math.abs(getSplitPhi() - 0.200) < 1e-9, 'phi should stay fixed when upsilon decreases inside the boundary.');
+      console.assert(Math.abs(getSplitUpsilonValue() - 0.080) < 1e-9, 'upsilon should decrease alone inside the boundary.');
+
+      document.getElementById('splitEpsilon').value = '1.300';
+      document.getElementById('splitPhi').value = '0.200';
+      document.getElementById('splitUpsilon').value = '0.100';
+      document.getElementById('splitUpsilon').value = '0.140';
+      normalizeSplitSliders('splitUpsilon');
+      console.assert(Math.abs(getSplitPhi() - 0.160) < 1e-9, 'phi should decrease when upsilon increases past the boundary.');
+      console.assert(Math.abs(getSplitUpsilonValue() - 0.140) < 1e-9, 'upsilon should keep the changed value when exceeding the boundary.');
+
+      splitMode = prevSplitMode;
+      quadDiagonalMode = prevQuadMode;
+      document.getElementById('splitEpsilon').value = prevEps;
+      document.getElementById('splitPhi').value = prevPhi;
+      document.getElementById('splitUpsilon').value = prevUpsilon;
+      normalizeSplitSliders();
+    }
+
+    runGeometrySanityChecks();
+
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
+
     animate();
   </script>
 </body>
