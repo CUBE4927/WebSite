@@ -26,14 +26,15 @@ function fieldColor(T, rho) {
   const aRho = unitSaturate(rho);
 
   const h = 4 * aT;
-
+  const op = 2 * aRho;
+  
   const baseR = hueEq(h, 4);
   const baseG = hueEq(h, 2);
   const baseB = hueEq(h, 0);
 
-  const whiteW = opaEq(aRho, 2); // usually 0 because a(rho) < 1
-  const baseW = opaEq(aRho, 1);
-  const blackW = opaEq(aRho, 0);
+  const whiteW = opaEq(op, 2);
+  const baseW = opaEq(op, 1);
+  const blackW = opaEq(op, 0);
 
   const r = whiteW * 1 + baseW * baseR + blackW * 0;
   const g = whiteW * 1 + baseW * baseG + blackW * 0;
