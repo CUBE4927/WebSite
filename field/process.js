@@ -183,6 +183,29 @@ class GasSim2D {
 
         rho2[k] = rho[k] - dt * divRhoV;
         T2[k] = T[k] + dt * (alpha * lapT - (gamma - 1) * T[k] * divV);
+		
+		if (rho2[k] < 0) {
+		  console.log("NEGATIVE RHO", {
+			i,
+			j,
+			rho: rho[k],
+			rhoNew: rho2[k],
+			divRhoV,
+			vx: vx[k],
+			vy: vy[k]
+		  });
+		}
+		if (!Number.isFinite(rho2[k])) {
+		  console.log("RHO NAN/INF", {
+			i,
+			j,
+			rho: rho[k],
+			rhoNew: rho2[k],
+			divRhoV,
+			vx: vx[k],
+			vy: vy[k]
+		  });
+		}
 
         rho2[k] = Math.max(rho2[k], 1e-4);
         T2[k] = Math.max(T2[k], 1e-4);
