@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Chromofluxional Automata</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #151923;
+      --panel2: #1c2230;
+      --line: #2a3142;
+      --text: #e8ecf5;
+      --muted: #8e98ad;
+      --accent: #7aa2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      --side-width: max(calc((100vw - 100vh) / 2), 25vh);
+      --sim-size: min(100vh, calc(100vw - var(--side-width) * 2));
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: var(--side-width) var(--sim-size) var(--side-width);
+    }
+
+    .panel { height: 100vh; background: rgba(21, 25, 35, 0.94); }
+    .side-panel { padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+    .left { border-right: 1px solid var(--line); }
+    .right { border-left: 1px solid var(--line); }
+    .side-title { margin: 0 0 4px; color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .control-card { border: 1px solid var(--line); border-radius: 16px; background: rgba(28, 34, 48, 0.72); padding: 12px 14px; }
+    .control-card label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .value, .numeric-value { color: var(--text); font-variant-numeric: tabular-nums; }
+
+    .rule-note { color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .rule-note strong { color: var(--muted); font-weight: 650; }
+    .rule-note code { color: var(--text); font-family: inherit; font-size: 11px; }
+    .rule-tabs { margin-top: 10px; }
+    .rule-tabs input { display: none; }
+    .rule-tab-labels { display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: 2px; }
+    .rule-tab-labels label {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      background: rgba(18, 22, 30, 0.72);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .rule-tab-body { min-height: 176px; border: 1px solid var(--line); border-radius: 0 0 14px 14px; background: rgba(10, 12, 18, 0.48); padding: 12px; overflow: hidden; }
+    .rule-panel { display: none; }
+    .rule-panel-title { color: var(--text); font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+    .rule-panel p { margin: 0 0 8px; }
+    .rule-panel ul { margin: 0; padding-left: 16px; }
+    .rule-panel li { margin: 4px 0; }
+    #ruleCollapse:checked ~ .rule-tab-labels label[for="ruleCollapse"],
+    #ruleSuperpose:checked ~ .rule-tab-labels label[for="ruleSuperpose"],
+    #ruleMutate:checked ~ .rule-tab-labels label[for="ruleMutate"] {
+      background: rgba(28, 34, 48, 0.92);
+      color: var(--text);
+      border-color: rgba(122, 162, 255, 0.45);
+    }
+    #ruleCollapse:checked ~ .rule-tab-body .rule-panel-collapse,
+    #ruleSuperpose:checked ~ .rule-tab-body .rule-panel-superpose,
+    #ruleMutate:checked ~ .rule-tab-body .rule-panel-mutate { display: block; }
+
+    input[type="range"], input[type="number"] { width: 100%; }
+    input[type="number"] { height: 38px; background: #0a0c12; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; }
+
+    .palette-wrap { width: min(100%, 280px); aspect-ratio: 1; position: relative; margin: auto; container-type: inline-size; }
+    .swatch {
+      position: absolute;
+      width: 20%;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: var(--color);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      color: #000000;
+      display: grid;
+      place-items: center;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+	  font-family:
+	    "Consolas",
+        "JetBrains Mono",
+        "Fira Code",
+        monospace;
+      
+      font-size: clamp(11px, 12cqw, 28px);
+      font-weight: 700;
+    }
+    .swatch.selected { outline: 3px solid rgba(255, 255, 255, 0.86); outline-offset: 3px; }
+    .swatch[data-color="ff6666"] { left: 50%; top: 14%; }
+    .swatch[data-color="cc9966"] { left: 35%; top: 38%; }
+    .swatch[data-color="cc6699"] { left: 65%; top: 38%; }
+    .swatch[data-color="99cc66"] { left: 20%; top: 62%; }
+    .swatch[data-color="999999"] { left: 50%; top: 62%; }
+    .swatch[data-color="9966cc"] { left: 80%; top: 62%; }
+    .swatch[data-color="66ff66"] { left: 5%; top: 86%; }
+    .swatch[data-color="66cc99"] { left: 35%; top: 86%; }
+    .swatch[data-color="6699cc"] { left: 65%; top: 86%; }
+    .swatch[data-color="6666ff"] { left: 95%; top: 86%; }
+
+    .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .button-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .button-full { width: 100%; }
+    .button { height: 36px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); }
+    .primary { border-color: rgba(122, 162, 255, 0.55); background: linear-gradient(180deg, rgba(122, 162, 255, 0.25), rgba(122, 162, 255, 0.12)); }
+    .secondary { background: rgba(28, 34, 48, 0.86); }
+    .disabled { background: rgba(18, 22, 30, 0.5) !important; color: rgba(232, 236, 245, 0.35) !important; pointer-events: none; }
+
+    .colormap-wrap { width: min(100%, 280px); aspect-ratio: 1; position: relative; margin: auto; }
+    .colormap-canvas { width: 100%; height: 100%; display: block; border-radius: 16px; background: #020308; }
+    .avg-marker {
+      position: absolute;
+      width: 20%;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: var(--avg-color, #999999);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      outline: 3px solid rgba(255, 255, 255, 0.86);
+      outline-offset: 3px;
+      pointer-events: none;
+    }
+    .stat-row { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .simulation-area { width: var(--sim-size); height: 100vh; background: #020308; }
+    canvas { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+<main class="app">
+  <aside class="panel side-panel left">
+    <h2 class="side-title">Palette</h2>
+    <div class="control-card">
+      <label><span>Selected Color</span><span class="value" id="selectedColorValue">RGB</span></label>
+      <div class="palette-wrap">
+        <button class="swatch" data-color="ff6666" style="--color:#ff6666">0</button>
+        <button class="swatch" data-color="cc9966" style="--color:#cc9966">0</button>
+        <button class="swatch" data-color="cc6699" style="--color:#cc6699">0</button>
+        <button class="swatch" data-color="99cc66" style="--color:#99cc66">0</button>
+        <button class="swatch selected" data-color="999999" style="--color:#999999">25</button>
+        <button class="swatch" data-color="9966cc" style="--color:#9966cc">0</button>
+        <button class="swatch" data-color="66ff66" style="--color:#66ff66">0</button>
+        <button class="swatch" data-color="66cc99" style="--color:#66cc99">0</button>
+        <button class="swatch" data-color="6699cc" style="--color:#6699cc">0</button>
+        <button class="swatch" data-color="6666ff" style="--color:#6666ff">0</button>
+      </div>
+    </div>
+    <div class="control-card">
+      <label><span>Grid Size n</span><span class="numeric-value" id="gridSizeValue">5</span></label>
+      <input id="gridSize" type="range" min="1" max="16" step="1" value="5">
+    </div>
+    <button class="button secondary button-full" id="clearButton">Clear</button>
+    <div class="control-card rule-note">
+      <strong>Rule</strong><br>
+      양자 붕괴 + 순환 우위 + 셀룰러 오토마타 기반의 3단계 규칙입니다.
+	  한 번의 시행은 붕괴(Collapse), 중첩(Superpose), 변이(Mutate) 단계로 이루어집니다.
+      <div class="rule-tabs">
+        <input type="radio" name="ruleTab" id="ruleCollapse" checked>
+        <input type="radio" name="ruleTab" id="ruleSuperpose">
+        <input type="radio" name="ruleTab" id="ruleMutate">
+        <div class="rule-tab-labels">
+          <label for="ruleCollapse">Collapse</label>
+          <label for="ruleSuperpose">Superpose</label>
+          <label for="ruleMutate">Mutate</label>
+        </div>
+        <div class="rule-tab-body">
+          <section class="rule-panel rule-panel-collapse">
+            <div class="rule-panel-title">Collapse</div>
+            <p>각 셀은 자신의 <code>중첩된 색</code>의 <code>성분</code>에 따라 <code>R</code> / <code>G</code> / <code>B</code> 중 하나로 확률적으로 <code>붕괴</code>됩니다.</p>
+            <ul>
+			  <li><code>XYZ</code> → <code>X</code> / <code>Y</code> / <code>Z</code> 각각 <code>1/3</code>
+			    <ul>
+				  <li><code>RRR</code> → <code>R</code> <code>1</code></li>
+				  <li><code>RRG</code> → <code>R</code> <code>2/3</code> / <code>G</code> <code>1/3</code></li>
+                  <li><code>RGB</code> → <code>R</code> / <code>G</code> / <code>B</code> 각각 <code>1/3</code></li>
+				</ul>
+			  </li>
+              <li><code>붕괴</code> 결과는 <code>80%</code> 크기의 임시 셀로 표시됩니다.</li>
+            </ul>
+          </section>
+          <section class="rule-panel rule-panel-superpose">
+            <div class="rule-panel-title">Superpose</div>
+            <p><code>붕괴된 색</code> <code>X</code>와 변을 공유하는 이웃 셀의 <code>붕괴된 색</code> <code>Y</code>를 비교해 다시 <code>중첩</code>하여 <code>중첩된 색</code>을 변화시킵니다.</p>
+            <ul>
+              <li>순환 우위: <code>R &gt; G &gt; B &gt; R</code></li>
+              <li><code>P = 0.75 × Σ compare(X,Y)</code>
+			    <ul>
+                  <li><code>P &gt; 0</code>이면 <code>inferior(X)</code> <code>|P|</code>개가 <code>X</code>로 바뀝니다.</li>
+                  <li><code>P &lt; 0</code>이면 <code>X</code> <code>|P|</code>개가 <code>superior(X)</code>로 바뀝니다.</li>
+				  <li><code>P = 0</code>이면 변하지 않습니다.</li>
+				</ul>
+			  </li>
+            </ul>
+          </section>
+          <section class="rule-panel rule-panel-mutate">
+            <div class="rule-panel-title">Mutate</div>
+            <p>각 셀의 <code>중첩된 색</code>의 세 <code>성분</code>이 각각 독립적, 확률적으로 <code>변이</code>됩니다. <code>(μ' = 2/3 * μ, ν' = 1 - μ')</code></p>
+            <ul>
+              <li>각 <code>성분</code>은 확률 <code>μ</code>로 <code>R</code> / <code>G</code> / <code>B</code> 중 하나로 <code>변이</code>됩니다.</li>
+			  <ul>
+			    <li>결과적으로 <code>성분</code> 3개가 변이할 확률은 <code>μ'³</code>,</li>
+				<li><code>성분</code> 2개가 변이할 확률은 <code>μ'²ν' (×3)</code>,</li>
+				<li><code>성분</code> 1개가 변이할 확률은 <code>μ'ν'² (×3)</code>,</li>
+				<li>모든 <code>성분</code>이 변이하지 않을 확률은 <code>ν'³</code>입니다.</li>
+			  </ul>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="simulation-area"><canvas id="simulationCanvas"></canvas></section>
+
+  <aside class="panel side-panel right">
+    <h2 class="side-title">Simulation</h2>
+    <div class="control-card">
+      <label><span>Average Color</span><span class="value" id="averageColorValue">#999999</span></label>
+      <div class="colormap-wrap">
+        <canvas class="colormap-canvas" id="colormapCanvas"></canvas>
+        <div class="avg-marker" id="averageMarker"></div>
+      </div>
+      <div class="stat-row"><span>C_R</span><span id="cRValue">25</span></div>
+      <div class="stat-row"><span>C_G</span><span id="cGValue">25</span></div>
+      <div class="stat-row"><span>C_B</span><span id="cBValue">25</span></div>
+    </div>
+    <div class="control-card">
+      <label><span>Mutate Rate μ</span></label>
+      <input id="mutateRate" type="number" min="0" max="1" step="0.00001" value="0">
+    </div>
+    <div class="button-row-3">
+      <button class="button primary" id="collapseButton">Collapse</button>
+      <button class="button disabled" id="superposeButton">Superpose</button>
+      <button class="button disabled" id="mutateButton">Mutate</button>
+    </div>
+    <button class="button secondary button-full" id="csmCycleButton">CSM Cycle</button>
+    <div class="control-card">
+      <label><span>Auto Period</span><span class="numeric-value" id="periodValue">0.10s</span></label>
+      <input id="periodSlider" type="range" min="0.01" max="0.50" step="0.01" value="0.10">
+    </div>
+    <div class="button-row">
+      <button class="button primary" id="runButton">Run</button>
+      <button class="button disabled" id="pauseButton">Pause</button>
+    </div>
+  </aside>
+</main>
+
+<script>
+const COLOR_NAMES = {
+  ff6666: 'RRR',
+  cc9966: 'RRG',
+  '99cc66': 'RGG',
+  '66ff66': 'GGG',
+  '66cc99': 'GGB',
+  '6699cc': 'GBB',
+  '6666ff': 'BBB',
+  '9966cc': 'RBB',
+  cc6699: 'RRB',
+  '999999': 'RGB'
+};
+const NAME_TO_HEX = Object.fromEntries(Object.entries(COLOR_NAMES).map(([hex, name]) => [name, hex]));
+const PALETTE_COLORS = Object.keys(COLOR_NAMES);
+const PURE = { R: 'ff6666', G: '66ff66', B: '6666ff' };
+const PURE_TO_CHANNEL = Object.fromEntries(Object.entries(PURE).map(([channel, hex]) => [hex, channel]));
+const CHANNELS = ['R', 'G', 'B'];
+const CHANNEL_ORDER = { R: 0, G: 1, B: 2 };
+
+const state = {
+  n: 5,
+  selectedColor: '999999',
+  phase: 'collapse',
+  running: false,
+  intervalId: null,
+  cells: [],
+  tempCells: []
+};
+
+const canvas = document.getElementById('simulationCanvas');
+const ctx = canvas.getContext('2d');
+const gridSize = document.getElementById('gridSize');
+const gridSizeValue = document.getElementById('gridSizeValue');
+const selectedColorValue = document.getElementById('selectedColorValue');
+const collapseButton = document.getElementById('collapseButton');
+const superposeButton = document.getElementById('superposeButton');
+const mutateButton = document.getElementById('mutateButton');
+const csmCycleButton = document.getElementById('csmCycleButton');
+const runButton = document.getElementById('runButton');
+const pauseButton = document.getElementById('pauseButton');
+const periodSlider = document.getElementById('periodSlider');
+const periodValue = document.getElementById('periodValue');
+const clearButton = document.getElementById('clearButton');
+const mutateRateInput = document.getElementById('mutateRate');
+const colormapCanvas = document.getElementById('colormapCanvas');
+const colormapCtx = colormapCanvas.getContext('2d');
+const averageMarker = document.getElementById('averageMarker');
+const averageColorValue = document.getElementById('averageColorValue');
+const cRValue = document.getElementById('cRValue');
+const cGValue = document.getElementById('cGValue');
+const cBValue = document.getElementById('cBValue');
+
+const canonicalizeName = (name) => {
+  const text = typeof name === 'string' ? name : 'RGB';
+  return Array.from(text)
+    .filter((ch) => ch in CHANNEL_ORDER)
+    .sort((a, b) => CHANNEL_ORDER[a] - CHANNEL_ORDER[b])
+    .join('');
+};
+
+const safeNameFromHex = (hex) => COLOR_NAMES[hex] || 'RGB';
+const randomChoice = (items) => items[Math.floor(Math.random() * items.length)];
+const superior = (ch) => ({ R: 'B', G: 'R', B: 'G' }[ch]);
+const inferior = (ch) => ({ R: 'G', G: 'B', B: 'R' }[ch]);
+const compareChannels = (x, y) => (x === superior(y) ? 1 : x === y ? 0 : -1);
+
+const shuffle = (items) => {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+};
+
+const clearTemp = () => {
+  state.tempCells = Array.from({ length: state.n }, () => Array.from({ length: state.n }, () => null));
+};
+
+const resetCells = () => {
+  state.cells = Array.from({ length: state.n }, () => Array.from({ length: state.n }, () => '999999'));
+  clearTemp();
+};
+
+const darkenHex33 = (hex) => {
+  if (typeof hex !== 'string' || hex.length < 6) return '000000';
+  const div = (part) => Math.floor(parseInt(part, 16) / 3).toString(16).padStart(2, '0');
+  return div(hex.slice(0, 2)) + div(hex.slice(2, 4)) + div(hex.slice(4, 6));
+};
+
+const metrics = () => {
+  const rect = canvas.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height) * 0.5;
+  return {
+    rect,
+    size,
+    x0: (rect.width - size) / 2,
+    y0: (rect.height - size) / 2,
+    cell: size / state.n
+  };
+};
+
+const collapseOptions = (hex) => Array.from(safeNameFromHex(hex)).map((ch) => PURE[ch]);
+
+const probabilisticCount = (p, maxCount) => {
+  const capped = Math.min(Math.abs(p), maxCount);
+  const base = Math.floor(capped);
+  return base + (Math.random() < capped - base ? 1 : 0);
+};
+
+const getMutateRate = () => {
+  let mu = Number(mutateRateInput.value);
+  if (Number.isNaN(mu)) mu = 0;
+  mu = Math.min(1, Math.max(0, mu));
+  mu = Math.round(mu * 100000) / 100000;
+  mutateRateInput.value = mu.toFixed(5);
+  return mu;
+};
+
+const mutateName = (name, mu = getMutateRate()) => {
+  const text = canonicalizeName(name);
+  const mutated = Array.from(text).map((ch) => (Math.random() >= mu ? ch : randomChoice(CHANNELS)));
+  return canonicalizeName(mutated.join(''));
+};
+
+const applyMutate = (cells) => {
+  const mu = getMutateRate();
+  return cells.map((row) => row.map((hex) => {
+    const mutatedName = mutateName(safeNameFromHex(hex), mu);
+    return NAME_TO_HEX[mutatedName] || hex;
+  }));
+};
+
+const evolveName = (originalName, collapsedChannel, p) => {
+  const components = Array.from(canonicalizeName(originalName));
+
+  if (p > 0) {
+    const from = inferior(collapsedChannel);
+    const candidates = components.map((ch, i) => (ch === from ? i : -1)).filter((i) => i !== -1);
+    const count = probabilisticCount(p, candidates.length);
+    shuffle(candidates).slice(0, count).forEach((i) => { components[i] = collapsedChannel; });
+  } else if (p < 0) {
+    const to = superior(collapsedChannel);
+    const candidates = components.map((ch, i) => (ch === collapsedChannel ? i : -1)).filter((i) => i !== -1);
+    const count = probabilisticCount(-p, candidates.length);
+    shuffle(candidates).slice(0, count).forEach((i) => { components[i] = to; });
+  }
+
+  return canonicalizeName(components.join(''));
+};
+
+const countColors = () => {
+  const counts = Object.fromEntries(PALETTE_COLORS.map((hex) => [hex, 0]));
+  let cR = 0;
+  let cG = 0;
+  let cB = 0;
+
+  state.cells.forEach((row) => row.forEach((hex) => {
+    counts[hex] = (counts[hex] || 0) + 1;
+    Array.from(safeNameFromHex(hex)).forEach((ch) => {
+      if (ch === 'R') cR += 1;
+      if (ch === 'G') cG += 1;
+      if (ch === 'B') cB += 1;
+    });
+  }));
+
+  return { counts, cR, cG, cB };
+};
+
+const computeAverageColor = (cR, cG, cB) => {
+  const total = state.n * state.n || 1;
+  const channel = (c) => Math.round(102 + 51 * (c / total));
+  return { r: channel(cR), g: channel(cG), b: channel(cB) };
+};
+
+const computeAverageColorFromRatio = (r, g, b) => ({
+  r: Math.round(102 + 153 * r),
+  g: Math.round(102 + 153 * g),
+  b: Math.round(102 + 153 * b)
+});
+
+const rgbToHex = ({ r, g, b }) => [r, g, b]
+  .map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0'))
+  .join('');
+
+const TRIANGLE_CENTER = { x: 50, y: 56 };
+const TRIANGLE_SIDE = 86;
+const TRIANGLE_HEIGHT = TRIANGLE_SIDE * Math.sqrt(3) / 2;
+const TRIANGLE_TOP = { x: TRIANGLE_CENTER.x, y: TRIANGLE_CENTER.y - TRIANGLE_HEIGHT * 2 / 3 };
+const TRIANGLE_LEFT = { x: TRIANGLE_CENTER.x - TRIANGLE_SIDE / 2, y: TRIANGLE_CENTER.y + TRIANGLE_HEIGHT / 3 };
+const TRIANGLE_RIGHT = { x: TRIANGLE_CENTER.x + TRIANGLE_SIDE / 2, y: TRIANGLE_CENTER.y + TRIANGLE_HEIGHT / 3 };
+
+const averageToPalettePosition = (cR, cG, cB) => {
+  const total = 3 * state.n * state.n || 1;
+  const r = cR / total;
+  const g = cG / total;
+  const b = cB / total;
+  return {
+    x: r * TRIANGLE_TOP.x + g * TRIANGLE_LEFT.x + b * TRIANGLE_RIGHT.x,
+    y: r * TRIANGLE_TOP.y + g * TRIANGLE_LEFT.y + b * TRIANGLE_RIGHT.y
+  };
+};
+
+const updateStats = () => {
+  const { counts, cR, cG, cB } = countColors();
+
+  document.querySelectorAll('.swatch').forEach((swatch) => {
+    swatch.textContent = counts[swatch.dataset.color] || 0;
+  });
+
+  const avg = computeAverageColor(cR, cG, cB);
+  const avgHex = rgbToHex(avg);
+  const pos = averageToPalettePosition(cR, cG, cB);
+
+  averageColorValue.textContent = '#' + avgHex;
+  averageMarker.style.setProperty('--avg-color', '#' + avgHex);
+  averageMarker.style.left = pos.x + '%';
+  averageMarker.style.top = pos.y + '%';
+  cRValue.textContent = cR;
+  cGValue.textContent = cG;
+  cBValue.textContent = cB;
+};
+
+const drawColormap = () => {
+  const rect = colormapCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.floor((rect.width || colormapCanvas.clientWidth || 240) * dpr));
+  const height = Math.max(1, Math.floor((rect.height || colormapCanvas.clientHeight || 240) * dpr));
+
+  colormapCanvas.width = width;
+  colormapCanvas.height = height;
+
+  const cssW = width / dpr;
+  const cssH = height / dpr;
+  const top = { x: cssW * TRIANGLE_TOP.x / 100, y: cssH * TRIANGLE_TOP.y / 100 };
+  const left = { x: cssW * TRIANGLE_LEFT.x / 100, y: cssH * TRIANGLE_LEFT.y / 100 };
+  const right = { x: cssW * TRIANGLE_RIGHT.x / 100, y: cssH * TRIANGLE_RIGHT.y / 100 };
+  const denom = (left.y - right.y) * (top.x - right.x) + (right.x - left.x) * (top.y - right.y);
+  const image = colormapCtx.createImageData(width, height);
+  const data = image.data;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const cssX = x / dpr;
+      const cssY = y / dpr;
+      const r = ((left.y - right.y) * (cssX - right.x) + (right.x - left.x) * (cssY - right.y)) / denom;
+      const g = ((right.y - top.y) * (cssX - right.x) + (top.x - right.x) * (cssY - right.y)) / denom;
+      const b = 1 - r - g;
+      const index = (y * width + x) * 4;
+
+      if (r >= 0 && g >= 0 && b >= 0) {
+        const avg = computeAverageColorFromRatio(r, g, b);
+        data[index] = avg.r;
+        data[index + 1] = avg.g;
+        data[index + 2] = avg.b;
+        data[index + 3] = 255;
+      } else {
+        data[index] = 2;
+        data[index + 1] = 3;
+        data[index + 2] = 8;
+        data[index + 3] = 255;
+      }
+    }
+  }
+
+  colormapCtx.putImageData(image, 0, 0);
+};
+
+const drawGrid = () => {
+  const { rect, size, x0, y0, cell } = metrics();
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  updateStats();
+
+  const drawTile = (ox, oy) => {
+    const tx = x0 + ox * size;
+    const ty = y0 + oy * size;
+    const isMain = ox === 0 && oy === 0;
+
+    for (let y = 0; y < state.n; y += 1) {
+      for (let x = 0; x < state.n; x += 1) {
+        const base = state.cells[y][x];
+        const baseSize = cell * 0.95;
+        const baseInset = (cell - baseSize) / 2;
+        ctx.fillStyle = '#' + (isMain ? base : darkenHex33(base));
+        ctx.fillRect(tx + x * cell + baseInset, ty + y * cell + baseInset, baseSize, baseSize);
+
+        const temp = state.tempCells[y][x];
+        if (temp) {
+          const overlaySize = cell * 0.8;
+          const overlayInset = (cell - overlaySize) / 2;
+          ctx.fillStyle = '#' + (isMain ? temp : darkenHex33(temp));
+          ctx.fillRect(tx + x * cell + overlayInset, ty + y * cell + overlayInset, overlaySize, overlaySize);
+        }
+      }
+    }
+  };
+
+  for (let oy = -1; oy <= 1; oy += 1) {
+    for (let ox = -1; ox <= 1; ox += 1) drawTile(ox, oy);
+  }
+};
+
+const updateButtons = () => {
+  const collapseActive = state.phase === 'collapse';
+  const superposeActive = state.phase === 'superpose';
+  const mutateActive = state.phase === 'mutate';
+
+  collapseButton.className = 'button ' + (collapseActive ? 'primary' : 'disabled');
+  superposeButton.className = 'button ' + (superposeActive ? 'primary' : 'disabled');
+  mutateButton.className = 'button ' + (mutateActive ? 'primary' : 'disabled');
+  runButton.className = 'button ' + (!state.running ? 'primary' : 'disabled');
+  pauseButton.className = 'button ' + (state.running ? 'primary' : 'disabled');
+};
+
+const collapseGrid = () => {
+  state.tempCells = state.cells.map((row) => row.map((hex) => randomChoice(collapseOptions(hex))));
+  state.phase = 'superpose';
+  updateButtons();
+  drawGrid();
+};
+
+const superposeGrid = () => {
+  const next = state.cells.map((row) => [...row]);
+
+  for (let y = 0; y < state.n; y += 1) {
+    for (let x = 0; x < state.n; x += 1) {
+      const temp = state.tempCells[y][x];
+      if (!temp) continue;
+      const ch = PURE_TO_CHANNEL[temp];
+      if (!ch) continue;
+
+      let sum = 0;
+      [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(([dx, dy]) => {
+        const nx = (x + dx + state.n) % state.n;
+        const ny = (y + dy + state.n) % state.n;
+        sum += compareChannels(ch, PURE_TO_CHANNEL[state.tempCells[ny][nx]]);
+      });
+
+      const p = 0.75 * sum;
+      const nextName = evolveName(safeNameFromHex(state.cells[y][x]), ch, p);
+      next[y][x] = NAME_TO_HEX[nextName] || '999999';
+    }
+  }
+
+  state.cells = next;
+  clearTemp();
+  state.phase = 'mutate';
+  updateButtons();
+  drawGrid();
+};
+
+const mutateStep = () => {
+  state.cells = applyMutate(state.cells);
+  state.phase = 'collapse';
+  updateButtons();
+  drawGrid();
+};
+
+const runFullCycle = () => {
+  if (state.phase === 'collapse') {
+    collapseGrid();
+    superposeGrid();
+    mutateStep();
+  } else if (state.phase === 'superpose') {
+    superposeGrid();
+    mutateStep();
+  } else {
+    mutateStep();
+  }
+};
+
+const paintAt = (clientX, clientY, erase = false) => {
+  const { rect, size, x0, y0, cell } = metrics();
+  const lx = clientX - rect.left;
+  const ly = clientY - rect.top;
+  const wrappedX = (((lx - x0) % size) + size) % size;
+  const wrappedY = (((ly - y0) % size) + size) % size;
+  const gx = Math.floor(wrappedX / cell);
+  const gy = Math.floor(wrappedY / cell);
+
+  if (gx < 0 || gy < 0 || gx >= state.n || gy >= state.n) return;
+  state.cells[gy][gx] = erase ? '999999' : state.selectedColor;
+  state.tempCells[gy][gx] = null;
+  drawGrid();
+};
+
+const clearGrid = () => {
+  if (state.phase === 'superpose') superposeGrid();
+  if (state.phase === 'mutate') mutateStep();
+  resetCells();
+  state.phase = 'collapse';
+  updateButtons();
+  drawGrid();
+};
+
+let painting = false;
+let erasing = false;
+
+canvas.addEventListener('pointerdown', (event) => {
+  painting = true;
+  erasing = event.button === 2;
+  paintAt(event.clientX, event.clientY, erasing);
+});
+window.addEventListener('pointermove', (event) => { if (painting) paintAt(event.clientX, event.clientY, erasing); });
+window.addEventListener('pointerup', () => { painting = false; erasing = false; });
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+
+document.querySelectorAll('.swatch').forEach((swatch) => {
+  swatch.addEventListener('click', () => {
+    state.selectedColor = swatch.dataset.color;
+    selectedColorValue.textContent = safeNameFromHex(state.selectedColor);
+    document.querySelectorAll('.swatch').forEach((item) => item.classList.toggle('selected', item === swatch));
+  });
+});
+
+gridSize.addEventListener('input', () => {
+  if (state.phase === 'superpose') superposeGrid();
+  if (state.phase === 'mutate') mutateStep();
+  state.n = Number(gridSize.value);
+  gridSizeValue.textContent = state.n;
+  resetCells();
+  state.phase = 'collapse';
+  updateButtons();
+  drawGrid();
+});
+
+clearButton.addEventListener('click', clearGrid);
+collapseButton.addEventListener('click', () => { if (state.phase === 'collapse') collapseGrid(); });
+superposeButton.addEventListener('click', () => { if (state.phase === 'superpose') superposeGrid(); });
+mutateButton.addEventListener('click', () => { if (state.phase === 'mutate') mutateStep(); });
+csmCycleButton.addEventListener('click', runFullCycle);
+
+const restartInterval = () => {
+  if (state.intervalId !== null) {
+    clearInterval(state.intervalId);
+    state.intervalId = null;
+  }
+  if (state.running) state.intervalId = setInterval(runFullCycle, Number(periodSlider.value) * 1000);
+};
+
+runButton.addEventListener('click', () => {
+  if (state.running) return;
+  state.running = true;
+  updateButtons();
+  restartInterval();
+});
+
+pauseButton.addEventListener('click', () => {
+  if (!state.running) return;
+  state.running = false;
+  restartInterval();
+  updateButtons();
+});
+
+periodSlider.addEventListener('input', () => {
+  periodValue.textContent = Number(periodSlider.value).toFixed(2) + 's';
+  restartInterval();
+});
+
+mutateRateInput.addEventListener('change', getMutateRate);
+mutateRateInput.addEventListener('blur', getMutateRate);
+
+const resize = () => {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawColormap();
+  drawGrid();
+};
+window.addEventListener('resize', resize);
+
+const runTests = () => {
+  console.assert(darkenHex33('ffcc99') === '554433', 'darkenHex33');
+  console.assert(canonicalizeName('GRR') === 'RRG', 'canonicalize GRR');
+  console.assert(canonicalizeName(['G', 'R', 'R'].join('')) === 'RRG', 'canonicalize joined array');
+  console.assert(canonicalizeName(undefined) === 'RGB', 'canonicalize undefined fallback');
+  console.assert(NAME_TO_HEX[canonicalizeName('GRR')] === 'cc9966', 'RRG lookup');
+  console.assert(compareChannels('B', 'R') === 1, 'compare superior');
+  console.assert(compareChannels('R', 'R') === 0, 'compare equal');
+  console.assert(compareChannels('G', 'R') === -1, 'compare inferior');
+  console.assert(evolveName('RGG', 'R', 3) === 'RRR', 'evolve positive');
+  console.assert(0.95 > 0.9 && 0.95 < 1, 'base cell visual scale should be 95%');
+  console.assert(csmCycleButton.textContent.includes('CSM'), 'CSM cycle button exists');
+  console.assert(mutateButton.textContent === 'Mutate', 'mutate button exists');
+  console.assert(document.querySelector('.button-row-3') !== null, 'three phase button row exists');
+  console.assert(Number(periodSlider.min) === 0.01, 'period min');
+  console.assert(Number(periodSlider.max) === 0.5, 'period max');
+  console.assert(runButton.textContent === 'Run', 'run button exists');
+  console.assert(pauseButton.textContent === 'Pause', 'pause button exists');
+  console.assert(clearButton.textContent === 'Clear', 'clear button exists');
+  console.assert(state.phase === 'collapse', 'initial phase collapse');
+  console.assert(Number(gridSize.min) === 1 && Number(gridSize.max) === 16, 'grid size range');
+  console.assert(mutateName('RGB', 0) === 'RGB', 'mutate rate 0 keeps color');
+  console.assert(NAME_TO_HEX[mutateName('RRR', 1)] !== undefined, 'mutate rate 1 returns valid color name');
+  console.assert(Number(mutateRateInput.step) === 0.00001, 'mutate rate precision');
+  const avgTest = computeAverageColor(25, 25, 25);
+  console.assert(rgbToHex(avgTest) === '999999', 'average RGB for all 999999 cells');
+  console.assert(rgbToHex(computeAverageColorFromRatio(1, 0, 0)) === 'ff6666', 'colormap pure R corner');
+  console.assert(rgbToHex(computeAverageColorFromRatio(0, 1, 0)) === '66ff66', 'colormap pure G corner');
+  console.assert(rgbToHex(computeAverageColorFromRatio(0, 0, 1)) === '6666ff', 'colormap pure B corner');
+  console.assert(countColors().cR + countColors().cG + countColors().cB === 3 * state.n * state.n, 'component total');
+  console.assert(Math.abs((TRIANGLE_LEFT.y - TRIANGLE_TOP.y) - (TRIANGLE_SIDE * Math.sqrt(3) / 2)) < 0.0001, 'triangle height should be equilateral');
+  const topPos = averageToPalettePosition(3, 0, 0);
+  const leftPos = averageToPalettePosition(0, 3, 0);
+  const rightPos = averageToPalettePosition(0, 0, 3);
+  console.assert(topPos.y < leftPos.y && topPos.y < rightPos.y, 'R corner should be top');
+  console.assert(leftPos.x < rightPos.x, 'G corner should be bottom-left and B bottom-right');
+  console.assert(gridSizeValue.classList.contains('numeric-value'), 'grid size value should use white numeric style');
+  console.assert(periodValue.classList.contains('numeric-value'), 'period value should use white numeric style');
+  console.assert(document.querySelector('label[for="ruleCollapse"]').textContent === 'Collapse', 'collapse tab label');
+  console.assert(document.querySelector('label[for="ruleSuperpose"]').textContent === 'Superpose', 'superpose tab label');
+  console.assert(document.querySelector('label[for="ruleMutate"]').textContent === 'Mutate', 'mutate tab label');
+  console.assert(getComputedStyle(document.querySelector('.swatch')).fontSize !== '', 'swatch count font should be computed');
+  console.assert(typeof runFullCycle === 'function', 'full cycle function exists');
+};
+
+resetCells();
+getMutateRate();
+updateButtons();
+runTests();
+resize();
+</script>
+</body>
+</html>
