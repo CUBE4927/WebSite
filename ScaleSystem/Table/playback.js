@@ -82,8 +82,20 @@ function playNoteEvents(events, relativePitches, secondsPerBeat = 0.125) {
   });
 }
 
-function playCurrentMode(relativePitches) {
-  const events = [
+function playCurrentMode(relativePitches, playLine) {
+  const Octave = [
+    { note: 14, start: 0, dur: 2 },
+    { note: 15, start: 2, dur: 2 },
+    { note: 16, start: 4, dur: 2 },
+    { note: 17, start: 6, dur: 2 },
+    { note: 18, start: 8, dur: 2 },
+    { note: 19, start: 10, dur: 2 },
+    { note: 20, start: 12, dur: 2 },
+    { note: 21, start: 14, dur: 2 },
+
+    { note: null, start: 16, dur: 0 }
+  ];
+  const Line = [
     { note: 0, start: 0, dur: 16 },
     { note: 2, start: 2, dur: 14 },
     { note: 4, start: 4, dur: 12 },
@@ -110,9 +122,11 @@ function playCurrentMode(relativePitches) {
     { note: 19, start: 12, dur: 1 },
     { note: 22, start: 13, dur: 1 },
     { note: 21, start: 14, dur: 1 },
-    { note: 17, start: 15, dur: 1 }
+    { note: 17, start: 15, dur: 1 },
+    
+    { note: null, start: 16, dur: 0 }
   ];
-  
+  const events = (playLine) ? Line : Octave;
   playNoteEvents(events, relativePitches, 0.125);
 }
 
