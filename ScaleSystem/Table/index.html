@@ -897,7 +897,7 @@
     let currentCircleMode = 'Chromatic';
     let currentFamilyIndex = 0;
     let currentModeIndex = 4;
-    let isPlaying = false;
+    window.isPlaying = false;
     
     const naturalAnglesChromatic = {
       D: 0,
@@ -1298,9 +1298,9 @@
       renderMutationButtons(accidentalText);
       layout.classList.add('show-detail');
 
-      if (isPlaying) {
+      if (window.isPlaying) {
         stopPlayback();
-        isPlaying = false;
+        window.isPlaying = false;
       }
     }
 
@@ -1392,20 +1392,20 @@
       const row = rows[currentFamilyIndex];
       if (!row) return;
     
-      if (isPlaying) {
+      if (window.isPlaying) {
         stopPlayback();
       }
     
       const accidentalText = metaAccidentals.textContent.trim();
       const relativePitches = buildAppliedPitches(accidentalText);
-      playCurrentMode(relativePitches, isPlaying);
+      playCurrentMode(relativePitches, window.isPlaying);
 
-      isPlaying = true;
+      window.isPlaying = true;
     });
     
     stopBtn.addEventListener('click', () => {
       stopPlayback();
-      isPlaying = false;
+      window.isPlaying = false;
     });
     document.addEventListener('keydown', (event) => {
       const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
