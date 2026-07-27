@@ -97,7 +97,7 @@ function playCurrentMode(relativePitches) {
     { note: 21, start: 14, dur: 1 },
     { note: 17, start: 15, dur: 1 }
   ];
-
+  stopPlayback();
   playNoteEvents(events, relativePitches, 0.125);
 }
 
