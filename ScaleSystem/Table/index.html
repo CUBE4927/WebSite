@@ -1396,11 +1396,11 @@
         stopPlayback();
       }
     
-    
-      isPlaying = true;
       const accidentalText = metaAccidentals.textContent.trim();
       const relativePitches = buildAppliedPitches(accidentalText);
-      playCurrentMode(relativePitches);
+      playCurrentMode(relativePitches, isPlaying);
+
+      isPlaying = true;
     });
     
     stopBtn.addEventListener('click', () => {
