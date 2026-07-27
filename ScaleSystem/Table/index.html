@@ -1389,12 +1389,13 @@
       renderCircle(metaAccidentals.textContent);
     });
     playBtn.addEventListener('click', () => {
-      if (isPlaying) return;
-    
       const row = rows[currentFamilyIndex];
       if (!row) return;
     
-      
+      if (isPlaying) {
+        stopPlayback();
+      }
+    
     
       isPlaying = true;
       const accidentalText = metaAccidentals.textContent.trim();
