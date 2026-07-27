@@ -1,5 +1,6 @@
 let audioContext = null;
 let activeOscillators = [];
+let playbackId = 0;
 
 function ensureAudioContext() {
   if (!audioContext) {
@@ -37,11 +38,25 @@ function noteValueToFrequency(noteValue, relativePitches) {
 
 function playNoteEvents(events, relativePitches, secondsPerBeat = 0.125) {
   const ctx = ensureAudioContext();
-  stopPlayback();
 
   const baseTime = ctx.currentTime;
 
+  const currentPlaybackId = ++playbackId;
+  
   events.forEach(({ note, start, dur }) => {
+    if (note === null) {
+      const delay = start * secondsPerBeat * 1000;
+
+      setTimeout(() => {
+        // 이 타이머가 현재 재생에서 만들어진 것일 때만 종료
+        if (playbackId === currentPlaybackId) {
+          window.isPlaying = false;
+        }
+      }, delay);
+
+      return;
+    }
+    
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
@@ -97,7 +112,7 @@ function playCurrentMode(relativePitches) {
     { note: 21, start: 14, dur: 1 },
     { note: 17, start: 15, dur: 1 }
   ];
-  stopPlayback();
+  
   playNoteEvents(events, relativePitches, 0.125);
 }
 
