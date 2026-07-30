@@ -141,7 +141,7 @@
       font-size: 0.92rem;
     }
 
-    .family-badge {
+    .y-badge {
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid var(--line);
@@ -218,7 +218,7 @@
     }
 
     .mono {
-      font-family: "JetBrains Mono", Consolas, monospace;
+      font-y: "JetBrains Mono", Consolas, monospace;
       font-size: 0.85rem;
     }
 
@@ -589,8 +589,7 @@
       <section class="panel left-panel">
         <div class="panel-header">
           <div>
-            <div class="panel-title">Scale Family Sheet</div>
-            <div class="panel-caption">16개의 Scale Family를 행별로 배열함. 각 행은 중앙 Mode의 Interval Sequence와 해당 Scale의 각 Mode의 임시표 값(♯수 − ♭수)으로 정렬된 7개 Mode들을 포함함.</div>
+            <div class="panel-caption">16개의 Scale을 행별로 배열함. 각 행은 해당 Scale의 각 Mode의 임시표 값(♯수 − ♭수)로 정렬된 7개의 Mode와 중앙 Mode의 Interval Sequence를 포함함.</div>
           </div>
           <div class="family-badge">16 Scales, 112 Modes</div>
         </div>
@@ -804,7 +803,7 @@
               <div class="detail-sub" id="detailSub">선택된 Mode의 화성 요약</div>
               <div id="modeName" style="margin-top:6px; font-size:0.95rem; color:var(--accent2);"></div>
             </div>
-            <div class="family-badge" id="detailBadge">Family 01 · Mode 04</div>
+            <div class="family-badge" id="detailBadge">Scale 01 · Mode 04</div>
           </div>
 
           <div class="detail-meta" style="grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -895,7 +894,7 @@
     ];
 
     let currentCircleMode = 'Chromatic';
-    let currentFamilyIndex = 0;
+    let currentScaleIndex = 0;
     let currentModeIndex = 4;
     window.isPlaying = false;
     
@@ -1062,13 +1061,13 @@
 
       return map;
     }
-    function getAllFamilyModeData() {
-      return rows.map((row, familyIndex) => {
+    function getAllScaleModeData() {
+      return rows.map((row, scaleIndex) => {
         const baseSequence = row.cells[0].textContent.trim();
         const modes = [];
         for (let i = 1; i <= 7; i++) {
           modes.push({
-            familyIndex,
+            scaleIndex,
             modeIndex: i - 1,
             accidentalText: row.cells[i]?.textContent.trim() || 'Natural / No accidentals',
             sequence: buildIntervalSequence(row.cells[i]?.textContent.trim() || 'Natural / No accidentals'),
@@ -1137,10 +1136,10 @@
       });
     }
     function findModeBySequence(sequenceStr) {
-      const allData = getAllFamilyModeData();
+      const allData = getAllScaleModeData();
     
-      for (const family of allData) {
-        for (const mode of family.modes) {
+      for (const scale of allData) {
+        for (const mode of scale.modes) {
           if (mode.sequence === sequenceStr) {
             return mode;
           }
@@ -1163,11 +1162,11 @@
         sharpBtn.className = 'mutation-button sharp';
         sharpBtn.disabled = !sharpMatch;
         sharpBtn.textContent = sharpMatch
-          ? `F${String(sharpMatch.familyIndex + 1).padStart(2, '0')} · M${String(sharpMatch.modeIndex + 1).padStart(2, '0')}`
+          ? `F${String(sharpMatch.scaleIndex + 1).padStart(2, '0')} · M${String(sharpMatch.modeIndex + 1).padStart(2, '0')}`
           : '-';
         if (sharpMatch) {
           sharpBtn.addEventListener('click', () => {
-            updateDetailFromCell(rows[sharpMatch.familyIndex], sharpMatch.modeIndex + 1);
+            updateDetailFromCell(rows[sharpMatch.scaleIndex], sharpMatch.modeIndex + 1);
           });
         }
         sharpButtons.push(sharpBtn);
@@ -1179,11 +1178,11 @@
         flatBtn.className = 'mutation-button flat';
         flatBtn.disabled = !flatMatch;
         flatBtn.textContent = flatMatch
-          ? `F${String(flatMatch.familyIndex + 1).padStart(2, '0')} · M${String(flatMatch.modeIndex + 1).padStart(2, '0')}`
+          ? `F${String(flatMatch.scaleIndex + 1).padStart(2, '0')} · M${String(flatMatch.modeIndex + 1).padStart(2, '0')}`
           : '-';
         if (flatMatch) {
           flatBtn.addEventListener('click', () => {
-            updateDetailFromCell(rows[flatMatch.familyIndex], flatMatch.modeIndex + 1);
+            updateDetailFromCell(rows[flatMatch.scaleIndex], flatMatch.modeIndex + 1);
           });
         }
         flatButtons.push(flatBtn);
@@ -1273,11 +1272,11 @@
     }
 
     function updateDetailFromCell(row, cellIndex) {
-      const familyIndex = rows.indexOf(row) + 1;
+      const scaleIndex = rows.indexOf(row) + 1;
       const baseSequence = row.cells[0].textContent.trim();
       const modeIndex = cellIndex;
       const accidentalText = row.cells[cellIndex]?.textContent.trim() || 'Natural / No accidentals';
-      currentFamilyIndex = rows.indexOf(row);
+      currentScaleIndex = rows.indexOf(row);
       currentModeIndex = cellIndex
 
       rows.forEach((r) => r.classList.remove('active'));
@@ -1285,10 +1284,10 @@
       clearSelectedCells();
       if (row.cells[cellIndex]) row.cells[cellIndex].classList.add('selected-cell');
 
-      detailTitle.textContent = `Family ${String(familyIndex).padStart(2, '0')} · Mode ${String(modeIndex).padStart(2, '0')}`;
+      detailTitle.textContent = `Scale ${String(scaleIndex).padStart(2, '0')} · Mode ${String(modeIndex).padStart(2, '0')}`;
       detailSub.textContent = '선택된 Mode의 화성 요약';
-      detailBadge.textContent = `F${String(familyIndex).padStart(2, '0')} · M${String(modeIndex).padStart(2, '0')}`;
-      const name = modeNames[familyIndex-1]?.[modeIndex-1] || '';
+      detailBadge.textContent = `S${String(scaleIndex).padStart(2, '0')} · M${String(modeIndex).padStart(2, '0')}`;
+      const name = modeNames[scaleIndex-1]?.[modeIndex-1] || '';
       modeNameEl.textContent = name;
       metaSequence.textContent = buildIntervalSequence(accidentalText);
       metaAccidentals.textContent = accidentalText;
@@ -1389,7 +1388,7 @@
       renderCircle(metaAccidentals.textContent);
     });
     playBtn.addEventListener('click', () => {
-      const row = rows[currentFamilyIndex];
+      const row = rows[currentScaleIndex];
       if (!row) return;
     
       if (window.isPlaying) {
@@ -1417,10 +1416,10 @@
     
       if (event.key === 'ArrowLeft') currentModeIndex = (currentModeIndex + 5) % 7 + 1;
       if (event.key === 'ArrowRight') currentModeIndex = currentModeIndex % 7 + 1;
-      if (event.key === 'ArrowUp') currentFamilyIndex = (currentFamilyIndex + 15) % 16;
-      if (event.key === 'ArrowDown') currentFamilyIndex = (currentFamilyIndex + 1) % 16;
+      if (event.key === 'ArrowUp') currentScaleIndex = (currentScaleIndex + 15) % 16;
+      if (event.key === 'ArrowDown') currentScaleIndex = (currentScaleIndex + 1) % 16;
     
-      updateDetailFromCell(rows[currentFamilyIndex], currentModeIndex);
+      updateDetailFromCell(rows[currentScaleIndex], currentModeIndex);
     });
     layout.classList.remove('show-detail');
   </script>
